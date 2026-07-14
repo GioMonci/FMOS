@@ -3,6 +3,7 @@
 FMOS (Fix My OS) is a program for repairing, cleaning, and setting up
 Windows PCs.
 
+(Vibe Coded) Testing Codex (5.6 Sol) and Claude (Opus 4.8) abilities.
 ## Requirements
 
 - Windows 10 or Windows 11
