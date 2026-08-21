@@ -6,6 +6,10 @@ FMOS stands for **Fix My OS**.
 
 This project is a Windows repair, maintenance, and first-time setup helper. The goal is to make common Windows repair tasks easier, safer, and less annoying for users who do not want to manually remember commands like `sfc`, `dism`, `chkdsk`, or app setup steps.
 
+FMOS is being rebuilt from scratch in C++. The current codebase is a minimal
+C++17 command-line foundation and does not run repair commands or change
+Windows yet.
+
 FMOS may eventually support:
 
 * Running common Windows repair commands
@@ -166,34 +170,44 @@ Logs should include:
 * Error messages
 * Whether a restart is recommended
 
-Logs should be saved somewhere predictable, such as:
+Logs should be saved in:
 
 ```text
 logs/
 ```
 
-or:
-
-```text
-output/logs/
-```
-
-Avoid storing logs in random locations.
+Do not store logs in random locations.
 
 ## Folder Structure
 
-Recommended project structure:
+Current project structure:
 
 ```text
 .
-├── src/                  Main source code
-├── logs/                 Runtime logs
-├── docs/                 Standard documentation
-├── README.md             Instructions for Users
+├── src/                  C++ source code
+├── logs/                 Runtime logs and log documentation
+├── CMakeLists.txt        CMake build configuration
+├── README.md             User instructions
 └── AGENTS.md             Instructions for AI coding agents
 ```
 
-Adjust this if the actual project structure changes.
+Keep runtime code in `src/` and generated logs in `logs/`. Do not add a
+`docs/` or `tests/` directory unless the user asks for one. Tests and GitHub
+Actions are intentionally deferred during this early rebuild.
+
+## Build System
+
+FMOS uses CMake and requires C++17 or newer.
+
+Build from PowerShell:
+
+```powershell
+cmake -S . -B build
+cmake --build build --config Release
+```
+
+Keep `CMakeLists.txt` simple. Do not add dependencies, package managers, test
+frameworks, or CI configuration unless they are needed for a requested feature.
 
 ## Code Style
 
@@ -201,10 +215,14 @@ Use clear names and simple logic.
 
 Preferred style:
 
+* Standard C++17
 * Clear function names
 * Small files when possible
 * Small functions with one purpose
 * Minimal global state
+* RAII for resource management
+* `const` where it improves clarity
+* Standard library features before third-party dependencies
 * Helpful error messages
 * Beginner-friendly output
 * No unnecessary dependencies
@@ -212,7 +230,9 @@ Preferred style:
 
 Avoid:
 
-* Giant scripts with everything in one file
+* Giant source files with unrelated responsibilities
+* Raw owning pointers when a standard library type is suitable
+* Platform-specific code outside a clearly named Windows-specific boundary
 * Obscure abbreviations
 * Silent failures
 * Unexplained admin commands
@@ -363,7 +383,8 @@ Use examples instead:
 config.example.json
 ```
 
-Config files should be documented in the README.
+Config files should be documented in the README. Do not add configuration files
+until a feature actually needs them.
 
 ## Secrets and Private Data
 
@@ -382,6 +403,9 @@ If secrets are needed, use environment variables or ignored local config files.
 ## Documentation Rules
 
 Documentation should be beginner-friendly.
+
+Keep project documentation in the root `README.md` for now. Do not recreate the
+`docs/` directory unless the user requests it or the README becomes too large.
 
 When adding a feature, update documentation with:
 
@@ -424,13 +448,7 @@ Before adding a dependency, consider whether the standard library or existing to
 
 ## Generated Files
 
-Generated files should usually go into:
-
-```text
-output/
-```
-
-or:
+Generated runtime logs should go into:
 
 ```text
 logs/
@@ -445,7 +463,8 @@ logs/
 └── setup-apps-2026-07-06.txt
 ```
 
-Do not place generated files inside source folders unless there is a clear reason.
+Build output belongs in the ignored `build/` directory. Do not place generated
+files inside `src/`.
 
 ## Platform Assumptions
 
@@ -467,7 +486,7 @@ When finishing a coding task, summarize:
 * What changed
 * Why it changed
 * How to run it
-* How to test it
+* How to build and verify it
 * Any important warnings or limitations
 
 Example:
