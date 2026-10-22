@@ -102,8 +102,8 @@ but it has not been run on Windows yet.
 
 Verified on macOS: logs land in `~/Library/Logs/FMOS`, the warning appears when
 the folder cannot be created, two sessions in the same second get separate
-files, and quitting early is noted. Not yet run on Windows. The "Open logs
-folder" button has not been pressed in testing yet.
+files, quitting early is noted, and "Open logs folder" opens Finder. Not yet
+run on Windows.
 
 - Create a timestamped session log (`fmos-YYYY-MM-DD_HH-MM-SS.txt`) in the
   user's app-data folder: `%LOCALAPPDATA%\FMOS\logs` on Windows,
