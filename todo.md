@@ -118,22 +118,38 @@ run on Windows.
   what was run.
 - Generated logs stay out of Git.
 
-### 5. [ ] Add the command runner
+### 5. [x] Add the command runner
 
-- Run known programs with explicit arguments through `os/exec`. Never build
-  shell command strings.
-- Stream output to the TUI and the log while showing elapsed time. Do not show
-  fake percentage progress.
-- Report each outcome clearly: tool not found, failed to start, failed,
-  finished, or unclear result.
-- Log each action in the session log: the exact command, whether it ran as
-  admin, start time and duration, exit code, important output, errors,
-  outcome, and whether a restart is recommended. Extend the end-of-session
-  summary with what passed, what failed, and what needs follow-up.
+Verified on macOS with Network > Show network details (`ifconfig`), plus test
+runs of every outcome. The Windows version (`ipconfig /all`) compiles, but it
+has not been run on Windows yet.
+
+- Run known programs by full path with explicit arguments through `os/exec`
+  (`internal/runner`). Never build shell command strings or search PATH.
+- Show output live on a full-width task screen with the elapsed time. No fake
+  percentage progress. After it finishes, the output can be scrolled.
+- Report each outcome clearly: finished, failed (with exit code), program not
+  found, could not start, or stopped.
+- Log each action: the exact command, admin status, start time, duration, exit
+  code, outcome, errors, and full output. The end-of-session summary lists
+  every action and how it ended.
 - Refuse to run system-changing actions when logs cannot be saved.
-- Decide how cancellation works for each tool. Stopping a queue prevents the
-  next task from starting, but does not abruptly kill a repair that is running.
-- Test with harmless commands (`whoami`, `ipconfig`) before wiring up repairs.
+- Actions are listed in `internal/actions` (one file per OS). The first one is
+  Network > Show network details, which is read-only.
+
+**Stopping (decided):** read-only actions can be stopped with Esc.
+System-changing actions cannot be stopped from FMOS, so a repair is never cut
+off halfway. FMOS cannot quit while an action runs, so every action finishes
+and is logged. On Windows, programs run in their own hidden console, so
+closing FMOS's window or pressing Ctrl+C does not interrupt them.
+
+**Left for later steps:**
+
+- "Restart recommended" and "unclear result" depend on reading each tool's
+  output, so they are added with each repair (steps 12-15).
+- Windows tools print in the console's code page, so non-English characters
+  may look wrong. SFC prints UTF-16 when its output is captured. Decode both
+  properly when adding SFC (step 14).
 
 ### 6. [ ] Add admin detection and the action review screen
 
@@ -321,6 +337,8 @@ The goal is to help answer "why am I lagging?"
 
 ### 20. [ ] Connection overview (read-only)
 
+- Network > Show network details (raw `ipconfig /all`) already exists from
+  step 5. This step adds a plain-English overview on top of it.
 - Show active adapters, connection type (Wi-Fi or Ethernet), link speed, IP
   address, gateway, and DNS (`Get-NetAdapter`, `Get-NetIPConfiguration`).
 - For Wi-Fi, show the network name, signal strength, and band

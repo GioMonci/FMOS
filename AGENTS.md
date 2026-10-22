@@ -29,10 +29,12 @@ The roadmap and the order of work live in `todo.md`.
 
 The repository contains the Go foundation (`cmd/fmos/main.go`) and the TUI
 (`internal/tui/`): a System panel with real, read-only system details
-(`internal/sysinfo/`), a session log for every run (`internal/logging/`), and a
-menu where only the Logs section is real. The others are still "Coming soon"
-placeholders. FMOS does not run repair commands or change the system. The
-command runner is next (step 5 in `todo.md`).
+(`internal/sysinfo/`), a session log for every run (`internal/logging/`), a
+command runner (`internal/runner/`), and a list of actions per OS
+(`internal/actions/`). The only action so far is Network > Show network
+details, which is read-only. OS Repair and Tools are still "Coming soon"
+placeholders. FMOS does not run repair commands or change the system yet. The
+action review screen and admin restart are next (step 6 in `todo.md`).
 
 ### Planned interface
 
@@ -195,6 +197,11 @@ Risky actions should have:
 * Commands that need an interactive terminal, such as `sudo` password prompts,
   hand the terminal over with `tea.ExecProcess`. FMOS never asks for or stores passwords.
 * If a tool is missing, say which tool it is and how to get it.
+* Run actions through `internal/runner`. It only accepts a program's full
+  path, so it never searches `PATH`, and it reports how the run ended.
+* Stopping: read-only actions may be stopped with Esc. System-changing actions
+  must never be stopped from FMOS, and FMOS cannot quit while any action runs,
+  so every action finishes and is logged.
 
 ## Distribution and Updates
 
@@ -310,8 +317,10 @@ Current project structure:
 .
 ├── cmd/fmos/             main package: opens the TUI, handles --help and --version
 ├── internal/
-│   ├── tui/              Bubble Tea screens: System panel, menu, and Logs section
+│   ├── tui/              Bubble Tea screens: System panel, menu, sections, task screen
 │   ├── sysinfo/          System panel data (Windows query, or fastfetch on macOS/Linux)
+│   ├── actions/          What FMOS can run, per OS (actions_windows.go, ...)
+│   ├── runner/           Runs a program, streams its output, reports how it ended
 │   ├── logging/          Session logs in the user's app-data folder
 │   └── platform/         Admin/root detection, opening folders, Windows folder
 ├── go.mod                Go module definition

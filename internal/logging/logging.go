@@ -12,6 +12,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/GioMonci/FMOS/internal/platform"
+	"github.com/GioMonci/FMOS/internal/runner"
 	"github.com/GioMonci/FMOS/internal/sysinfo"
 )
 
@@ -22,6 +24,7 @@ type Session struct {
 	file         *os.File
 	started      time.Time
 	systemLogged bool
+	actions      []string // one summary line per action, for the end of the log
 }
 
 // Start creates a new session log and writes its header. An error means
@@ -82,6 +85,55 @@ func (s *Session) LogSystemInfo(info sysinfo.Info) error {
 	return err
 }
 
+// LogAction writes everything about one finished action: the exact command,
+// whether FMOS ran as admin, timing, exit code, outcome, and full output. The
+// file is flushed to disk right away, in case the computer crashes later.
+func (s *Session) LogAction(name string, result runner.Result) error {
+	exitCode := "none (the program did not run to completion)"
+	if result.ExitCode >= 0 {
+		exitCode = fmt.Sprint(result.ExitCode)
+	}
+	admin := "No"
+	if platform.IsAdmin() {
+		admin = "Yes"
+	}
+
+	var text strings.Builder
+	fmt.Fprintf(&text, "\nAction: %s\n", name)
+	fmt.Fprintf(&text, "  Command:   %s\n", result.Command)
+	fmt.Fprintf(&text, "  Admin:     %s\n", admin)
+	fmt.Fprintf(&text, "  Started:   %s\n", result.Started.Format(timeLayout))
+	fmt.Fprintf(&text, "  Duration:  %s\n", logDuration(result.Duration))
+	fmt.Fprintf(&text, "  Exit code: %s\n", exitCode)
+	fmt.Fprintf(&text, "  Outcome:   %s\n", result.Outcome)
+	if result.Err != nil {
+		fmt.Fprintf(&text, "  Error:     %v\n", result.Err)
+	}
+	fmt.Fprintf(&text, "  Output (%d lines):\n", len(result.Output))
+	for _, line := range result.Output {
+		fmt.Fprintf(&text, "    | %s\n", line)
+	}
+
+	summary := fmt.Sprintf("%s: %s", name, result.Outcome)
+	if result.Outcome == runner.Failed {
+		summary += fmt.Sprintf(" (exit code %d)", result.ExitCode)
+	}
+	s.actions = append(s.actions, summary)
+
+	if _, err := s.file.WriteString(text.String()); err != nil {
+		return err
+	}
+	return s.file.Sync()
+}
+
+// logDuration shows short runs in milliseconds and longer ones in seconds.
+func logDuration(duration time.Duration) time.Duration {
+	if duration < time.Second {
+		return duration.Round(time.Millisecond)
+	}
+	return duration.Round(time.Second)
+}
+
 // Close writes the end-of-session summary and closes the log file.
 func (s *Session) Close() error {
 	ended := time.Now()
@@ -92,7 +144,14 @@ func (s *Session) Close() error {
 	if !s.systemLogged {
 		text.WriteString("  System details were not gathered before FMOS closed.\n")
 	}
-	text.WriteString("  No actions were run in this session.\n")
+	if len(s.actions) == 0 {
+		text.WriteString("  No actions were run in this session.\n")
+	} else {
+		fmt.Fprintf(&text, "  Actions run: %d\n", len(s.actions))
+		for _, action := range s.actions {
+			fmt.Fprintf(&text, "    - %s\n", action)
+		}
+	}
 
 	_, writeErr := s.file.WriteString(text.String())
 	closeErr := s.file.Close()

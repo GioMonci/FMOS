@@ -5,6 +5,8 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
+
+	"github.com/GioMonci/FMOS/internal/actions"
 )
 
 const (
@@ -40,17 +42,27 @@ func (m model) View() tea.View {
 	return v
 }
 
-// render draws the whole screen: header, panels, a warning when logs cannot
-// be saved, and key hints.
+// render draws the whole screen: header, panels (or a running task), a
+// warning when logs cannot be saved, and key hints.
 func (m model) render() string {
 	width := min(m.width, maxWidth)
 	header := titleStyle.Render("FMOS (Fix My OS)") + mutedStyle.Render("  version "+m.version)
-	parts := []string{header, m.renderPanels(width)}
+
+	body := m.renderPanels(width)
+	if m.screen == taskScreen {
+		body = m.renderTask(width)
+	}
+	parts := []string{header, body}
 	if m.logErr != nil {
-		parts = append(parts, warningStyle.Width(width).Render("Warning: "+logProblem(m.logErr)))
+		parts = append(parts, m.warning(width))
 	}
 	parts = append(parts, mutedStyle.Render(m.keyHints()))
 	return lipgloss.JoinVertical(lipgloss.Left, parts...)
+}
+
+// warning explains that logs cannot be saved.
+func (m model) warning(width int) string {
+	return warningStyle.Width(width).Render("Warning: " + logProblem(m.logErr))
 }
 
 // renderPanels places the system panel and the menu side by side, or stacks
@@ -89,26 +101,58 @@ func panel(title, body string, width, height int) string {
 	return panelStyle.Width(width).Height(height).Render(content)
 }
 
-// rightPanelContent returns the menu, or the screen of the open section.
+// rightPanelContent returns the menu, or the open section.
 func (m model) rightPanelContent() (title, body string) {
-	selected := menuItems[m.cursor]
-	if m.open && selected.id == "logs" {
-		return selected.title, m.logsBody()
+	selected := m.section()
+	if m.screen == sectionScreen {
+		return selected.title, m.sectionBody()
 	}
-	if m.open {
-		return selected.title, selected.description + "\n\n" +
+
+	titles := make([]string, 0, len(menuItems))
+	for _, item := range menuItems {
+		titles = append(titles, item.title)
+	}
+	return "Menu", choiceList(titles, m.cursor) + "\n\n" + mutedStyle.Render(selected.description)
+}
+
+// choiceList draws a list where the selected entry is highlighted and marked
+// with ">", so it does not rely on color alone.
+func choiceList(entries []string, selected int) string {
+	lines := make([]string, 0, len(entries))
+	for i, entry := range entries {
+		if i == selected {
+			lines = append(lines, selectedStyle.Render("> "+entry))
+		} else {
+			lines = append(lines, "  "+entry)
+		}
+	}
+	return strings.Join(lines, "\n")
+}
+
+// sectionBody shows an open section: the Logs screen, the section's actions,
+// or a "Coming soon" note.
+func (m model) sectionBody() string {
+	section := m.section()
+	if section.id == "logs" {
+		return m.logsBody()
+	}
+	sectionActions := actions.InSection(section.id)
+	if len(sectionActions) == 0 {
+		return section.description + "\n\n" +
 			mutedStyle.Render("Coming soon. This part of FMOS has not been built yet.")
 	}
 
-	lines := make([]string, 0, len(menuItems))
-	for i, item := range menuItems {
-		if i == m.cursor {
-			lines = append(lines, selectedStyle.Render("> "+item.title))
-		} else {
-			lines = append(lines, "  "+item.title)
-		}
+	names := make([]string, 0, len(sectionActions))
+	for _, action := range sectionActions {
+		names = append(names, action.Name)
 	}
-	return "Menu", strings.Join(lines, "\n") + "\n\n" + mutedStyle.Render(selected.description)
+	chosen := sectionActions[m.actionCursor]
+	body := choiceList(names, m.actionCursor) + "\n\n" + chosen.Description + "\n\n" +
+		mutedStyle.Render("Runs: "+shortCommand(chosen.Command()))
+	if m.notice != "" {
+		body += "\n\n" + m.notice
+	}
+	return body
 }
 
 // logsBody shows where this session's log is being saved, with a button to
@@ -119,8 +163,8 @@ func (m model) logsBody() string {
 	}
 	body := "This session is being saved to:\n" + m.log.Path() + "\n\n" +
 		selectedStyle.Render("> Open logs folder")
-	if m.logsStatus != "" {
-		body += "\n\n" + mutedStyle.Render(m.logsStatus)
+	if m.notice != "" {
+		body += "\n\n" + mutedStyle.Render(m.notice)
 	}
 	return body
 }
@@ -136,13 +180,18 @@ func logProblem(err error) string {
 }
 
 func (m model) keyHints() string {
-	if m.open && menuItems[m.cursor].id == "logs" && m.logsAvailable() {
+	switch {
+	case m.screen == taskScreen:
+		return m.taskKeyHints()
+	case m.screen == sectionScreen && m.section().id == "logs" && m.logsAvailable():
 		return "enter open logs folder • esc back • q quit"
-	}
-	if m.open {
+	case m.screen == sectionScreen && len(actions.InSection(m.section().id)) > 0:
+		return "↑/↓ move • enter run • esc back • q quit"
+	case m.screen == sectionScreen:
 		return "esc back • q quit"
+	default:
+		return "↑/↓ move • enter select • q quit"
 	}
-	return "↑/↓ move • enter select • q quit"
 }
 
 // systemPanelBody shows the system details as label and value rows, fitted

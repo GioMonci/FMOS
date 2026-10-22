@@ -62,10 +62,11 @@ On a Mac:
 
 | Key | What it does |
 | --- | --- |
-| `↑` / `↓` (or `k` / `j`) | Move through the menu |
-| `Enter` | Open the selected section |
-| `Esc` | Go back to the menu |
-| `q` | Quit FMOS |
+| `↑` / `↓` (or `k` / `j`) | Move through the menu, or scroll a finished action's output |
+| `Enter` | Open the selected section, or run the selected action |
+| `Esc` | Go back. While a read-only action runs, stop it |
+| `Home` / `End`, `PgUp` / `PgDn` | Jump through a finished action's output |
+| `q` | Quit FMOS (not while an action is running) |
 
 Show the help without opening the menu:
 
@@ -94,8 +95,8 @@ go run ./cmd/fmos
 
 FMOS currently shows a System panel and its menu (OS Repair, Tools, Network,
 and Logs), and saves a log of each session (see [Logs](#logs)). The Logs
-section shows where the log is saved. The other sections are placeholders that
-say "Coming soon".
+section shows where the log is saved. Network has its first action (below).
+OS Repair and Tools are placeholders that say "Coming soon".
 
 The System panel shows your OS, CPU, GPU, RAM, disk space, uptime, user, and
 whether FMOS is running as Administrator. It only reads information and never
@@ -113,6 +114,28 @@ changes anything.
 
 Repair commands will be added carefully, with clear explanations,
 confirmations, and logging before any system-changing behavior is introduced.
+
+### Network > Show network details
+
+Lists your network adapters with their IP addresses, gateway, and DNS servers.
+Use it to check whether your PC has an address on your network, or to send the
+details to someone helping you.
+
+- **Runs:** `ipconfig /all` on Windows, `ifconfig` on macOS, `ip address` on Linux.
+- **Administrator:** not needed.
+- **Risks:** none. It only reads information and changes nothing.
+
+Open FMOS, choose **Network**, and press Enter on **Show network details**.
+The output appears as it is printed, with the elapsed time. When it finishes,
+FMOS says how it ended, for example:
+
+```text
+Finished in less than a second.
+The full output is in this session's log (Logs > Open logs folder).
+```
+
+Use the arrow keys to scroll through the output, and Esc to go back. The full
+output is also saved in the session log.
 
 ## Logs
 
