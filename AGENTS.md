@@ -27,9 +27,10 @@ The roadmap and the order of work live in `todo.md`.
 
 ### Current state
 
-The repository contains a minimal Go command-line foundation
-(`cmd/fmos/main.go`). It only prints help and version information. It does not
-run repair commands or change the system. The TUI is next (step 2 in `todo.md`).
+The repository contains the Go foundation (`cmd/fmos/main.go`) and the TUI
+skeleton (`internal/tui/`): the two-panel menu, where every section is a
+"Coming soon" placeholder. It does not run repair commands or change the
+system. The system info panel is next (step 3 in `todo.md`).
 
 ### Planned interface
 
@@ -298,9 +299,11 @@ Current project structure:
 
 ```text
 .
-├── cmd/fmos/             main package (help and version only for now)
+├── cmd/fmos/             main package: opens the TUI, handles --help and --version
+├── internal/tui/         Bubble Tea menu (sections are placeholders for now)
 ├── logs/                 Runtime logs and log documentation
 ├── go.mod                Go module definition
+├── go.sum                Dependency checksums
 ├── README.md             User instructions
 ├── CONTRIBUTING.md       Contributor instructions
 ├── AGENTS.md             Instructions for AI coding agents
@@ -339,24 +342,33 @@ the code as `_test.go` files.
 FMOS uses Go (1.27 or newer) as a single module, `github.com/GioMonci/FMOS`,
 with `go.mod` at the repository root.
 
-Build and run from PowerShell:
-
-```powershell
-go build -o build/fmos.exe ./cmd/fmos
-.\build\fmos.exe
-```
-
 Run without building a binary:
 
 ```powershell
 go run ./cmd/fmos
 ```
 
-Cross-compile a Windows build from macOS or Linux:
+Build output goes in `build/`, named for the computer it runs on. Use exactly
+these names everywhere: build commands, release assets, the website, and the
+update checker.
+
+| File | Runs on | `GOOS`/`GOARCH` |
+| --- | --- | --- |
+| `fmos-x64.exe` | Windows on Intel or AMD | `windows/amd64` |
+| `fmos-arm64.exe` | Windows on ARM | `windows/arm64` |
+| `fmos-macos` | macOS on Apple Silicon | `darwin/arm64` |
+| `fmos-linux` | Linux on Intel or AMD | `linux/amd64` |
+
+Build all four from macOS or Linux:
 
 ```bash
-CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o build/fmos.exe ./cmd/fmos
+CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o build/fmos-x64.exe ./cmd/fmos
+CGO_ENABLED=0 GOOS=windows GOARCH=arm64 go build -o build/fmos-arm64.exe ./cmd/fmos
+CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -o build/fmos-macos ./cmd/fmos
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o build/fmos-linux ./cmd/fmos
 ```
+
+The PowerShell version of these commands is in `README.md`.
 
 Before committing, run:
 
@@ -367,7 +379,11 @@ go vet ./...
 
 Dependencies:
 
-* Bubble Tea, Bubbles, and Lip Gloss (Charm) for the TUI
+* Bubble Tea v2 (`charm.land/bubbletea/v2`) and Lip Gloss v2
+  (`charm.land/lipgloss/v2`) for the TUI. Do not use the old v1 import paths
+  (`github.com/charmbracelet/...`); v2's API is different.
+* Bubbles v2 (`charm.land/bubbles/v2`) only when a ready-made component is
+  clearly simpler than a few lines of our own code. It is not used yet.
 * `golang.org/x/sys` for Windows admin detection
 
 Keep the build pure Go (`CGO_ENABLED=0`) so cross-compiling stays easy. Do not
@@ -649,7 +665,7 @@ FMOS supports Windows first, then macOS and Ubuntu Linux.
 When writing user-facing commands, prefer Windows-friendly examples:
 
 ```powershell
-.\build\fmos.exe
+.\build\fmos-x64.exe
 ```
 
 Use Bash examples only when the content is specifically about macOS, Linux, or

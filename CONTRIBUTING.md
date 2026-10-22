@@ -7,7 +7,7 @@
    ```powershell
    gofmt -l .
    go vet ./...
-   go build -o build/fmos.exe ./cmd/fmos
+   go build ./...
    ```
 
    `gofmt -l .` should print nothing.

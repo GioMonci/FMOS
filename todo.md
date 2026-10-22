@@ -21,7 +21,7 @@ been verified on a real machine or VM. Follow the rules in `AGENTS.md`.
   are not technical. FMOS should let them fix common problems, or collect logs
   to send me, without me being there in person.
 - **Language:** Go. Replaces the old C++ foundation and the earlier C#/.NET plan.
-- **TUI:** Bubble Tea, Bubbles, and Lip Gloss from Charm.
+- **TUI:** Bubble Tea v2 and Lip Gloss v2 from Charm (`charm.land/...`).
 - **Layout:** system info panel on the left, menu on the right.
 - **Menu sections:** OS Repair, Tools, Network, Logs.
 - **Platforms:** Windows (main), then macOS and Ubuntu.
@@ -50,15 +50,16 @@ been verified on a real machine or VM. Follow the rules in `AGENTS.md`.
 
 ## Open questions
 
-- [ ] Use Bubble Tea v1 or v2? Use whichever is the current stable release
-  when step 2 starts.
 - [ ] Code signing: unsigned downloads trigger a Windows SmartScreen warning.
   That's acceptable for friends at first, because the install guide explains
   it. Decide later whether paid signing is worth it.
 
 ## Phase 1: Go foundation and TUI
 
-### 1. [ ] Replace the C++ foundation with Go
+### 1. [x] Replace the C++ foundation with Go
+
+Verified on macOS. The Windows build cross-compiles, but it has not been run on
+Windows yet.
 
 - Remove `src/main.cpp` and `CMakeLists.txt`.
 - Add `go.mod` and `cmd/fmos/main.go`.
@@ -68,7 +69,10 @@ been verified on a real machine or VM. Follow the rules in `AGENTS.md`.
   sections of `AGENTS.md` to match.
 - Verify it builds and runs on Windows 10 and 11 (x64), and cross-compiles from macOS.
 
-### 2. [ ] Build the TUI skeleton
+### 2. [x] Build the TUI skeleton
+
+Verified on macOS. Double-clicking `fmos.exe` and the older Windows console
+window have not been tested on Windows yet.
 
 - Bubble Tea app with the system panel on the left and the menu on the right.
 - Menu: OS Repair, Tools, Network, Logs, Quit.
@@ -153,8 +157,8 @@ SmartScreen warnings, and updates with friends before any repair features exist.
 
 - Tag versions `v0.1.0`, `v0.2.0`, and so on. Build with
   `-ldflags "-X main.version=0.1.0"` so FMOS knows its own version.
-- Attach `fmos-windows-amd64.exe`, `fmos-windows-arm64.exe`, and
-  `SHA256SUMS.txt` to each GitHub Release.
+- Attach `fmos-x64.exe`, `fmos-arm64.exe`, and `SHA256SUMS.txt` to each
+  GitHub Release. The file names are listed in the README's Build section.
 - Create releases on the GitHub website or with `gh release create`.
 - Write short, plain-English release notes, because FMOS shows them on the update screen.
 - Check that releases contain no logs, private files, or local settings.
@@ -164,7 +168,8 @@ SmartScreen warnings, and updates with friends before any repair features exist.
 
 - Write it for people who are not technical.
 - Cover these points:
-  - Which file to download, and how to check x64 vs ARM in Settings > System > About.
+  - Which file to download (`fmos-x64.exe` or `fmos-arm64.exe`). Settings >
+    System > About shows "x64-based processor" or "ARM-based processor".
   - Making a `Documents\FMOS` folder and saving the file there.
   - The browser download warning, and SmartScreen's "More info > Run anyway",
     including why each one appears.
@@ -180,7 +185,8 @@ SmartScreen warnings, and updates with friends before any repair features exist.
 - One page: what FMOS is, a download button, install steps, updating, what
   FMOS does and does not do, and a link to the GitHub repo.
 - Point the download button at
-  `https://github.com/GioMonci/FMOS/releases/latest/download/fmos-windows-amd64.exe`.
+  `https://github.com/GioMonci/FMOS/releases/latest/download/fmos-x64.exe`,
+  with a smaller link for `fmos-arm64.exe`.
   That link always serves the newest release, so the site rarely needs editing.
 - Make it work on phones, and support light and dark mode.
 - Turn on Pages in the repo: Settings > Pages > Deploy from a branch > `main`,
@@ -328,8 +334,8 @@ The goal is to help answer "why am I lagging?"
 
 ### 27. [ ] More platforms and package managers
 
-- Add `darwin/arm64` and `linux/amd64` builds to releases once the macOS and
-  Ubuntu features exist. Build with `CGO_ENABLED=0`.
+- Add `fmos-macos` and `fmos-linux` to releases once the macOS and Ubuntu
+  features exist. Build with `CGO_ENABLED=0`.
 - Publish to winget so people can run `winget install` and `winget upgrade`.
   This needs a manifest pull request to `microsoft/winget-pkgs` for each release.
 - Add a Homebrew tap for macOS.
