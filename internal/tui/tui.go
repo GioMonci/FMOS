@@ -43,11 +43,19 @@ type model struct {
 	log          *logging.Session // nil when logs cannot be saved
 	logErr       error            // why logs cannot be saved, if they cannot
 	task         *task            // the action running or last run, if any
+	updates      updateState      // checking for and installing a newer FMOS
 }
 
 func newModel(version string, session *logging.Session, logErr error) model {
 	// 80x24 is a safe guess until the terminal reports its real size.
-	return model{version: version, width: 80, height: 24, log: session, logErr: logErr}
+	return model{
+		version: version,
+		width:   80,
+		height:  24,
+		log:     session,
+		logErr:  logErr,
+		updates: updateState{checking: true},
+	}
 }
 
 // systemInfoMsg delivers the system details once they have been gathered.
@@ -62,7 +70,7 @@ func loadSystemInfo() tea.Msg {
 }
 
 func (m model) Init() tea.Cmd {
-	return loadSystemInfo
+	return tea.Batch(loadSystemInfo, checkForUpdates(m.version), cleanUpAfterUpdate)
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -79,6 +87,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case outputLineMsg, taskDoneMsg, tickMsg:
 		return m.updateTask(msg)
+	case updateCheckedMsg, updateInstalledMsg, cleanUpMsg:
+		return m.updateUpdates(msg)
 	case tea.KeyPressMsg:
 		return m.handleKey(msg.String())
 	}
@@ -87,6 +97,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 // handleKey passes a key press to the screen that is showing.
 func (m model) handleKey(key string) (tea.Model, tea.Cmd) {
+	// Quitting while an update swaps the program file could leave FMOS
+	// half-replaced. The header already says to wait.
+	if m.updates.installing && (key == "q" || key == "ctrl+c") {
+		return m, nil
+	}
+
 	switch m.screen {
 	case taskScreen:
 		return m.handleTaskKey(key)
@@ -106,8 +122,11 @@ func (m model) handleMenuKey(key string) (tea.Model, tea.Cmd) {
 	case "down", "j":
 		m.cursor = min(m.cursor+1, len(menuItems)-1)
 	case "enter":
-		if m.section().id == "quit" {
+		if m.section().id == "quit" && !m.updates.installing {
 			return m, tea.Quit
+		}
+		if m.section().id == "quit" {
+			return m, nil
 		}
 		m.screen = sectionScreen
 		m.actionCursor = 0
@@ -129,9 +148,12 @@ func (m model) handleSectionKey(key string) (tea.Model, tea.Cmd) {
 	case "down", "j":
 		m.actionCursor = min(m.actionCursor+1, max(len(sectionActions)-1, 0))
 	case "enter":
-		if m.section().id == "logs" && m.logsAvailable() {
+		switch {
+		case m.section().id == "updates":
+			return m.handleUpdatesEnter()
+		case m.section().id == "logs" && m.logsAvailable():
 			m.notice = m.openLogsFolder()
-		} else if len(sectionActions) > 0 {
+		case len(sectionActions) > 0:
 			return m.startAction(sectionActions[m.actionCursor])
 		}
 	}

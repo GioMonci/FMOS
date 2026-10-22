@@ -31,6 +31,11 @@ var menuItems = []menuItem{
 		description: "See what FMOS did and how it went.",
 	},
 	{
+		id:          "updates",
+		title:       "Updates",
+		description: "Check for a newer version of FMOS and update it.",
+	},
+	{
 		id:          "quit",
 		title:       "Quit",
 		description: "Close FMOS.",

@@ -153,6 +153,10 @@ closing FMOS's window or pressing Ctrl+C does not interrupt them.
 
 ### 6. [ ] Add admin detection and the action review screen
 
+**Postponed:** do this on Windows together with step 12 (the first repair
+actions). Nothing changes the system yet, so there is nothing to review, and
+the Administrator restart can only be tested on Windows.
+
 - Admin detection already exists (`platform.IsAdmin`, added in step 3).
 - Describe each action with its name, plain-English explanation, exact command,
   admin requirement, whether it changes the system, whether a restart may be
@@ -197,7 +201,21 @@ Set up downloading, installing, and updating early, while FMOS is still
 harmless (menu, system info, logs). It is much easier to test downloads,
 SmartScreen warnings, and updates with friends before any repair features exist.
 
-### 7. [ ] Add update checking and self-update
+### 7. [x] Add update checking and self-update
+
+Verified on macOS. The check against the real GitHub works: with no release
+yet, it says "This is the newest version". Download, checksum, swap, and
+cleanup were tested against a stand-in GitHub server, including a tampered
+download, which was rejected. Still to test: a real update from a real release
+(step 11), and the swap on Windows.
+
+- Code: `internal/update` (check, download, verify, swap, clean up) and the
+  Updates section in the menu (`internal/tui/updates.go`).
+- FMOS cannot quit while an update installs, so the program file is never left
+  half-replaced. The previous version is kept as `<program>.old` until FMOS
+  next starts.
+- Builds whose version ends in `-dev` see the matching release as newer
+  (`0.1.0-dev` < `0.1.0`). That is expected for builds made from source.
 
 - This must be in the very first version you share. A copy without it never
   finds out that a new version exists.
@@ -221,7 +239,12 @@ SmartScreen warnings, and updates with friends before any repair features exist.
 - Tag versions `v0.1.0`, `v0.2.0`, and so on. Build with
   `-ldflags "-X main.version=0.1.0"` so FMOS knows its own version.
 - Attach `fmos-x64.exe`, `fmos-arm64.exe`, and `SHA256SUMS.txt` to each
-  GitHub Release. The file names are listed in the README's Build section.
+  GitHub Release. The file names and build commands are in `CONTRIBUTING.md`
+  (Building every file for a release).
+- `SHA256SUMS.txt` must have one line per file in the form
+  `<sha256 hash>  <file name>`, which is what `shasum -a 256 fmos-*.exe`
+  (macOS) or `sha256sum fmos-*.exe` (Linux) prints. The update checker refuses
+  any download without a matching line.
 - Create releases on the GitHub website or with `gh release create`.
 - Write short, plain-English release notes, because FMOS shows them on the update screen.
 - Check that releases contain no logs, private files, or local settings.

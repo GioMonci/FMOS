@@ -126,6 +126,12 @@ func (s *Session) LogAction(name string, result runner.Result) error {
 	return s.file.Sync()
 }
 
+// Note writes a short timestamped line, such as the result of an update check.
+func (s *Session) Note(text string) error {
+	_, err := fmt.Fprintf(s.file, "\n%s  %s\n", time.Now().Format("15:04:05"), text)
+	return err
+}
+
 // logDuration shows short runs in milliseconds and longer ones in seconds.
 func logDuration(duration time.Duration) time.Duration {
 	if duration < time.Second {

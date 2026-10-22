@@ -31,10 +31,12 @@ The repository contains the Go foundation (`cmd/fmos/main.go`) and the TUI
 (`internal/tui/`): a System panel with real, read-only system details
 (`internal/sysinfo/`), a session log for every run (`internal/logging/`), a
 command runner (`internal/runner/`), and a list of actions per OS
-(`internal/actions/`). The only action so far is Network > Show network
-details, which is read-only. OS Repair and Tools are still "Coming soon"
-placeholders. FMOS does not run repair commands or change the system yet. The
-action review screen and admin restart are next (step 6 in `todo.md`).
+(`internal/actions/`), and an update checker (`internal/update/`, the Updates
+menu section). The only action so far is Network > Show network details, which
+is read-only. OS Repair and Tools are still "Coming soon" placeholders. FMOS
+does not run repair commands or change the system yet. Step 6 (action review
+screen and admin restart) is postponed until it can be tested on Windows, so
+the release process (step 8 in `todo.md`) is next.
 
 ### Planned interface
 
@@ -214,6 +216,9 @@ Risky actions should have:
   running exe. If any step fails, keep the current version working.
 * An update check must never block or slow down the menu. Being offline is
   normal, not an error.
+* FMOS cannot quit while an update installs, so the program file is never left
+  half-replaced. Release asset names must match the build table below, or the
+  update checker will not find this computer's file.
 
 ## Windows Repair Commands
 
@@ -321,6 +326,7 @@ Current project structure:
 │   ├── sysinfo/          System panel data (Windows query, or fastfetch on macOS/Linux)
 │   ├── actions/          What FMOS can run, per OS (actions_windows.go, ...)
 │   ├── runner/           Runs a program, streams its output, reports how it ended
+│   ├── update/           Checks GitHub for a newer release, installs it when asked
 │   ├── logging/          Session logs in the user's app-data folder
 │   └── platform/         Admin/root detection, opening folders, Windows folder
 ├── go.mod                Go module definition
@@ -388,7 +394,8 @@ CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -o build/fmos-macos ./cmd/fmos
 CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o build/fmos-linux ./cmd/fmos
 ```
 
-The PowerShell version of these commands is in `README.md`.
+`README.md` shows each platform building its own files, which is what users
+need. `CONTRIBUTING.md` has the full set for releases, including PowerShell.
 
 Before committing, run:
 

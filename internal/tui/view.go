@@ -47,6 +47,9 @@ func (m model) View() tea.View {
 func (m model) render() string {
 	width := min(m.width, maxWidth)
 	header := titleStyle.Render("FMOS (Fix My OS)") + mutedStyle.Render("  version "+m.version)
+	if badge := m.updateBadge(); badge != "" {
+		header += "  •  " + titleStyle.Render(badge)
+	}
 
 	body := m.renderPanels(width)
 	if m.screen == taskScreen {
@@ -133,8 +136,11 @@ func choiceList(entries []string, selected int) string {
 // or a "Coming soon" note.
 func (m model) sectionBody() string {
 	section := m.section()
-	if section.id == "logs" {
+	switch section.id {
+	case "logs":
 		return m.logsBody()
+	case "updates":
+		return m.updatesBody()
 	}
 	sectionActions := actions.InSection(section.id)
 	if len(sectionActions) == 0 {
@@ -185,6 +191,10 @@ func (m model) keyHints() string {
 		return m.taskKeyHints()
 	case m.screen == sectionScreen && m.section().id == "logs" && m.logsAvailable():
 		return "enter open logs folder • esc back • q quit"
+	case m.screen == sectionScreen && m.section().id == "updates" && m.updates.installing:
+		return "esc back • please wait for the update to finish before quitting"
+	case m.screen == sectionScreen && m.section().id == "updates" && m.updatesButton() != "":
+		return "enter " + m.updatesButton() + " • esc back • q quit"
 	case m.screen == sectionScreen && len(actions.InSection(m.section().id)) > 0:
 		return "↑/↓ move • enter run • esc back • q quit"
 	case m.screen == sectionScreen:
