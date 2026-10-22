@@ -25,10 +25,9 @@ been verified on a real machine or VM. Follow the rules in `AGENTS.md`.
 - **Layout:** system info panel on the left, menu on the right.
 - **Menu sections:** OS Repair, Tools, Network, Logs.
 - **Platforms:** Windows (main), then macOS and Ubuntu.
-- **System info:** `fastfetch --format json` when installed, parsed into
-  FMOS's own panel, with a small built-in fallback when it is missing.
-  fastfetch is usually not installed on Windows, so the Windows fallback needs
-  to be good on its own.
+- **System info:** on Windows, one read-only PowerShell query of built-in
+  Windows data, because fastfetch is usually not installed there. On macOS and
+  Linux, `fastfetch --format json`, parsed into FMOS's own panel.
 - **Distribution:** a single portable `fmos.exe` on GitHub Releases. No installer.
 - **Updates:** FMOS checks GitHub for a newer release and updates itself only
   after the user confirms.
@@ -84,13 +83,17 @@ window have not been tested on Windows yet.
 - Double-clicking `fmos.exe` opens the menu, and the window stays open until
   the user quits.
 
-### 3. [ ] Add the system info panel
+### 3. [x] Add the system info panel
+
+Verified on macOS, both with and without fastfetch. The Windows query compiles,
+but it has not been run on Windows yet.
 
 - Show OS and version, CPU, GPU, RAM used/total, disk space, uptime, current
   user, and whether FMOS is running as admin.
-- Use `fastfetch --format json` when it is installed. Otherwise use a built-in
-  fallback, starting with Windows.
-- If a value cannot be read, show "Unknown" and log why. Never crash the panel.
+- On Windows, use one read-only PowerShell query. On macOS and Linux, use
+  `fastfetch --format json`, and explain how to install it when it is missing.
+- Load the details in the background so the menu opens right away.
+- If a value cannot be read, show "Unknown" and explain why. Never crash the panel.
 - Keep this panel read-only.
 
 ### 4. [ ] Add session logging
@@ -98,6 +101,8 @@ window have not been tested on Windows yet.
 - Create a timestamped session log in `logs/` next to `fmos.exe`, and show its full path.
 - Record date and time, OS, admin status, the exact command, exit code,
   important output, errors, outcome, and whether a restart is recommended.
+- At the start of each session, log the System panel details and its
+  `Problems` (why any details were missing).
 - Check that the log folder is writable before running any action. If it is
   not, explain why and suggest moving FMOS to a folder like `Documents\FMOS`.
 - End each session with a short plain-English summary: what ran, what passed,
@@ -118,15 +123,40 @@ window have not been tested on Windows yet.
 
 ### 6. [ ] Add admin detection and the action review screen
 
-- Detect Administrator (Windows) or root (macOS/Linux).
+- Admin detection already exists (`platform.IsAdmin`, added in step 3).
 - Describe each action with its name, plain-English explanation, exact command,
   admin requirement, whether it changes the system, whether a restart may be
   needed, and whether it needs internet.
 - Before any system-changing action, show that description and ask for confirmation.
-- If admin is required and missing, explain how to rerun FMOS as Administrator.
-  A "Relaunch as Administrator" option may trigger one normal UAC prompt, only
-  when the user chooses it, and must never loop.
 - Never restart the computer automatically.
+
+**Getting Administrator rights on Windows (decided):**
+
+- Windows cannot raise a running program to Administrator, because admin
+  rights are fixed when a program starts. FMOS can only start a new copy of
+  itself as Administrator.
+- When an action needs admin and FMOS does not have it, explain why and offer
+  **"Restart FMOS as Administrator"**. Choosing it shows the normal Windows
+  "Yes/No" (UAC) prompt, opens a new FMOS as Administrator, and closes the old
+  window. Use `ShellExecute` with the `runas` verb from `golang.org/x/sys/windows`.
+- The new FMOS opens where the user was. The old one passes the section and
+  action at startup (for example `--open os-repair/sfc`), and the new one opens
+  straight on that action's explanation and confirmation screen. It never runs
+  the action automatically, so the user still confirms. Only the section and
+  action carry over; anything else simply starts fresh.
+- If the user picks "No" on the prompt (Windows error 1223, "cancelled"), keep
+  running without admin, say what will not work, and never ask again on its own.
+- **Not chosen: always starting as Administrator** (a `requireAdministrator`
+  manifest). Most features do not need admin. A prompt on every launch teaches
+  people to click "Yes" without reading. On a standard user account, the
+  Administrator copy runs as the admin account instead of the person's own
+  account, which is the wrong user for browser settings and their apps.
+- App installs do not need an Administrator FMOS. winget shows the Yes/No
+  prompt itself when an installer needs it.
+- FMOS is not code-signed, so the prompt says "Unknown publisher" (yellow).
+  Explain this in the install guide (step 9).
+- macOS and Linux do not relaunch. They run single root-only commands through
+  `sudo`, with the terminal handed over to the user (`tea.ExecProcess`).
 
 ## Phase 2: First release for friends
 
@@ -173,7 +203,8 @@ SmartScreen warnings, and updates with friends before any repair features exist.
   - Making a `Documents\FMOS` folder and saving the file there.
   - The browser download warning, and SmartScreen's "More info > Run anyway",
     including why each one appears.
-  - Opening FMOS, and when to use "Run as administrator".
+  - Opening FMOS, and what the Administrator (Yes/No) prompt looks like when
+    FMOS asks to restart as Administrator, including why it says "Unknown publisher".
   - How updates work.
   - How to send logs for help.
   - How to remove FMOS (delete the folder).

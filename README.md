@@ -92,9 +92,24 @@ go run ./cmd/fmos
 
 ## Current status
 
-FMOS currently shows its menu (OS Repair, Tools, Network, and Logs). Every
-section is a placeholder that says "Coming soon". The system information panel
-comes next. Repair commands will be added carefully, with clear explanations,
+FMOS currently shows a System panel and its menu (OS Repair, Tools, Network,
+and Logs). Every menu section is a placeholder that says "Coming soon".
+
+The System panel shows your OS, CPU, GPU, RAM, disk space, uptime, user, and
+whether FMOS is running as Administrator. It only reads information and never
+changes anything.
+
+- **Windows:** the details come from Windows itself. Nothing extra is needed.
+- **macOS and Linux:** the details come from
+  [fastfetch](https://github.com/fastfetch-cli/fastfetch). If it is not
+  installed, FMOS shows "Unknown" and tells you how to install it:
+
+  ```bash
+  brew install fastfetch        # macOS
+  sudo apt install fastfetch    # Ubuntu
+  ```
+
+Repair commands will be added carefully, with clear explanations,
 confirmations, and logging before any system-changing behavior is introduced.
 
 Runtime logs will be stored in `logs/`. Generated logs are ignored by Git.

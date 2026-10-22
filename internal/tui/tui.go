@@ -1,7 +1,14 @@
 // Package tui draws the FMOS terminal menu.
 package tui
 
-import tea "charm.land/bubbletea/v2"
+import (
+	"context"
+	"time"
+
+	tea "charm.land/bubbletea/v2"
+
+	"github.com/GioMonci/FMOS/internal/sysinfo"
+)
 
 // Run opens the FMOS menu and returns when the user quits.
 func Run(version string) error {
@@ -11,10 +18,12 @@ func Run(version string) error {
 
 // model holds everything the menu needs to draw itself.
 type model struct {
-	version string
-	width   int  // terminal width in columns
-	cursor  int  // index of the selected menu item
-	open    bool // true while the selected section is showing
+	version    string
+	width      int          // terminal width in columns
+	cursor     int          // index of the selected menu item
+	open       bool         // true while the selected section is showing
+	info       sysinfo.Info // details shown in the System panel
+	infoLoaded bool         // false until the system details arrive
 }
 
 func newModel(version string) model {
@@ -22,14 +31,28 @@ func newModel(version string) model {
 	return model{version: version, width: 80}
 }
 
+// systemInfoMsg delivers the system details once they have been gathered.
+type systemInfoMsg sysinfo.Info
+
+// loadSystemInfo gathers system details in the background, so the menu
+// opens right away even when Windows is slow to answer.
+func loadSystemInfo() tea.Msg {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	return systemInfoMsg(sysinfo.Gather(ctx))
+}
+
 func (m model) Init() tea.Cmd {
-	return nil
+	return loadSystemInfo
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
+	case systemInfoMsg:
+		m.info = sysinfo.Info(msg)
+		m.infoLoaded = true
 	case tea.KeyPressMsg:
 		return m.handleKey(msg.String())
 	}

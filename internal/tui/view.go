@@ -1,7 +1,6 @@
 package tui
 
 import (
-	"runtime"
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
@@ -27,7 +26,11 @@ var (
 	titleStyle    = lipgloss.NewStyle().Bold(true)
 	selectedStyle = lipgloss.NewStyle().Bold(true).Reverse(true)
 	mutedStyle    = lipgloss.NewStyle().Foreground(lipgloss.BrightBlack)
+	labelStyle    = lipgloss.NewStyle().Width(labelWidth)
 )
+
+// labelWidth fits the longest System panel label ("Uptime:") plus a space.
+const labelWidth = 8
 
 func (m model) View() tea.View {
 	v := tea.NewView(m.render())
@@ -50,18 +53,19 @@ func (m model) render() string {
 // renderPanels places the system panel and the menu side by side, or stacks
 // them when the terminal is too narrow.
 func (m model) renderPanels(width int) string {
-	systemBody := systemPanelBody()
 	rightTitle, rightBody := m.rightPanelContent()
+	frame := panelStyle.GetHorizontalFrameSize() // border and padding
 
 	if width < sideBySideMinWidth {
 		return lipgloss.JoinVertical(lipgloss.Left,
-			panel("System", systemBody, width, 0),
+			panel("System", m.systemPanelBody(width-frame), width, 0),
 			panel(rightTitle, rightBody, width, 0),
 		)
 	}
 
 	systemWidth := width * 3 / 5
 	menuWidth := width - systemWidth - 1 // one column of space between panels
+	systemBody := m.systemPanelBody(systemWidth - frame)
 
 	// Measure both panels first so they can be drawn with the same height.
 	height := max(
@@ -108,22 +112,44 @@ func (m model) keyHints() string {
 	return "↑/↓ move • enter select • q quit"
 }
 
-// systemPanelBody is a placeholder until the system info panel is built
-// (todo.md step 3).
-func systemPanelBody() string {
-	return "OS:  " + osName() + "\n\n" + mutedStyle.Render("More system details are coming soon.")
-}
-
-// osName returns a friendly name for the operating system FMOS is running on.
-func osName() string {
-	switch runtime.GOOS {
-	case "windows":
-		return "Windows"
-	case "darwin":
-		return "macOS"
-	case "linux":
-		return "Linux"
-	default:
-		return runtime.GOOS
+// systemPanelBody shows the system details as label and value rows, fitted
+// to the given width. Long values wrap inside their own column so the labels
+// stay lined up.
+func (m model) systemPanelBody(width int) string {
+	if !m.infoLoaded {
+		return mutedStyle.Render("Loading system info...")
 	}
+
+	info := m.info
+	admin := "No"
+	if info.Admin {
+		admin = "Yes"
+	}
+	rows := []struct{ label, value string }{
+		{"OS", info.OS},
+		{"CPU", info.CPU},
+		{"GPU", info.GPU},
+		{"RAM", info.RAM},
+		{"Disk", info.Disk},
+		{"Uptime", info.Uptime},
+		{"User", info.User},
+		{"Admin", admin},
+	}
+
+	valueStyle := lipgloss.NewStyle().Width(max(width-labelWidth, 10))
+	lines := make([]string, 0, len(rows))
+	for _, row := range rows {
+		value := row.value
+		if value == "" {
+			value = mutedStyle.Render("Unknown")
+		}
+		lines = append(lines, lipgloss.JoinHorizontal(lipgloss.Top,
+			labelStyle.Render(row.label+":"),
+			valueStyle.Render(value),
+		))
+	}
+	for _, problem := range info.Problems {
+		lines = append(lines, "", mutedStyle.Width(width).Render(problem))
+	}
+	return strings.Join(lines, "\n")
 }

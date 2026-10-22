@@ -28,9 +28,10 @@ The roadmap and the order of work live in `todo.md`.
 ### Current state
 
 The repository contains the Go foundation (`cmd/fmos/main.go`) and the TUI
-skeleton (`internal/tui/`): the two-panel menu, where every section is a
-"Coming soon" placeholder. It does not run repair commands or change the
-system. The system info panel is next (step 3 in `todo.md`).
+(`internal/tui/`): a System panel with real, read-only system details
+(`internal/sysinfo/`), and a menu where every section is still a "Coming soon"
+placeholder. It does not run repair commands or change the system. Session
+logging is next (step 4 in `todo.md`).
 
 ### Planned interface
 
@@ -46,9 +47,10 @@ system. The system info panel is next (step 3 in `todo.md`).
  ↑/↓ move   Enter select   Esc back   q quit
 ```
 
-* **System panel (left):** basic, read-only system information. It uses
-  `fastfetch --format json` when it is installed and a small built-in fallback
-  when it is not.
+* **System panel (left):** basic, read-only system information. On Windows it
+  comes from one read-only PowerShell query of built-in Windows data. On macOS
+  and Linux it comes from `fastfetch --format json`. It loads in the background,
+  and anything it cannot read shows as "Unknown" with a plain-English reason.
 * **Menu (right):** feature sections. Selecting one shows its actions.
   * **OS Repair:** on Windows, SFC, DISM, and read-only disk checks.
   * **Tools:** installing software (winget), driver checks and updates,
@@ -123,8 +125,9 @@ replacement for them.
 * "Linux" means **Ubuntu** (apt, systemd, NetworkManager). Do not assume other
   distributions unless support for them is added on purpose.
 * Keep OS-specific code in files with Go OS suffixes: `_windows.go`,
-  `_darwin.go`, `_linux.go`. Shared code (the TUI, logging, the command runner)
-  must not contain OS-specific commands or paths.
+  `_darwin.go`, `_linux.go`. Code shared by macOS and Linux goes in an
+  `_other.go` file that starts with `//go:build !windows`. Shared code (the TUI,
+  logging, the command runner) must not contain OS-specific commands or paths.
 * Each OS provides its own list of actions. A menu section with nothing
   available on the current OS says so ("Not available on macOS yet") instead
   of disappearing silently.
@@ -300,7 +303,10 @@ Current project structure:
 ```text
 .
 ├── cmd/fmos/             main package: opens the TUI, handles --help and --version
-├── internal/tui/         Bubble Tea menu (sections are placeholders for now)
+├── internal/
+│   ├── tui/              Bubble Tea screens: System panel and menu (sections are placeholders)
+│   ├── sysinfo/          System panel data (Windows query, or fastfetch on macOS/Linux)
+│   └── platform/         Admin/root detection
 ├── logs/                 Runtime logs and log documentation
 ├── go.mod                Go module definition
 ├── go.sum                Dependency checksums
@@ -318,7 +324,7 @@ Planned Go structure:
 ├── cmd/fmos/             main package: starts the TUI, handles --help and --version
 ├── internal/
 │   ├── tui/              Bubble Tea screens: system panel, menu, action views
-│   ├── sysinfo/          System panel data (fastfetch JSON or built-in fallback)
+│   ├── sysinfo/          System panel data (Windows query, or fastfetch on macOS/Linux)
 │   ├── actions/          Action definitions per OS (actions_windows.go, ...)
 │   ├── runner/           Runs external commands, streams and captures output
 │   ├── platform/         Admin/root detection and other small OS helpers
@@ -415,7 +421,8 @@ Avoid:
 * `panic` for normal errors
 * Interfaces before there is a second implementation
 * Goroutines without a clear owner and a way to stop
-* OS-specific code outside `_windows.go`, `_darwin.go`, or `_linux.go` files
+* OS-specific code outside `_windows.go`, `_darwin.go`, `_linux.go`, or
+  `_other.go` (`//go:build !windows`) files
 * Obscure abbreviations
 * Unexplained admin commands
 * Hardcoded machine-specific paths
@@ -507,8 +514,11 @@ When admin permission is required:
 * Do not repeatedly request elevation.
 * Avoid surprise privilege escalation.
 
-On Windows, a "Relaunch as Administrator" option may trigger the normal UAC
-prompt once, but only when the user chooses it. On macOS and Ubuntu, run FMOS
+On Windows, a running program cannot gain Administrator rights. When an action
+needs admin, FMOS offers "Restart FMOS as Administrator", which shows the normal
+UAC prompt once, but only when the user chooses it. Do not make FMOS always
+start as Administrator (no `requireAdministrator` manifest). See step 6 in
+`todo.md` for the reasons. On macOS and Ubuntu, run FMOS
 as a normal user, and run individual root-only commands through `sudo` with the
 terminal handed over to the user.
 
@@ -659,8 +669,8 @@ FMOS supports Windows first, then macOS and Ubuntu Linux.
 
 * Do not assume a command works the same way on every OS.
 * Do not assume Linux distributions other than Ubuntu.
-* Keep OS-specific behavior behind the `_windows.go`, `_darwin.go`, and
-  `_linux.go` file boundaries.
+* Keep OS-specific behavior behind the `_windows.go`, `_darwin.go`,
+  `_linux.go`, and `_other.go` file boundaries.
 
 When writing user-facing commands, prefer Windows-friendly examples:
 
