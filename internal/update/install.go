@@ -17,6 +17,11 @@ import (
 // maxDownloadSize stops a broken or unexpected download from filling the disk.
 const maxDownloadSize = 200 << 20 // 200 MB
 
+// releaseDownloads is the only place FMOS downloads updates from: this
+// project's own GitHub Releases. A release whose links point anywhere else is
+// refused.
+var releaseDownloads = "https://github.com/GioMonci/FMOS/releases/download/"
+
 // Install downloads the release's program file next to the running FMOS,
 // checks it against the release's SHA-256 checksum, and swaps it in. If any
 // step fails, the running version stays in place. The new version starts the
@@ -36,6 +41,11 @@ func installTo(ctx context.Context, release Release, program string) error {
 	}
 	if release.ChecksumsURL == "" {
 		return errors.New("this release has no checksum file, so the download could not be verified")
+	}
+	for _, url := range []string{release.AssetURL, release.ChecksumsURL} {
+		if !strings.HasPrefix(url, releaseDownloads) {
+			return fmt.Errorf("the download link does not point to FMOS's GitHub Releases page: %s", url)
+		}
 	}
 
 	want, err := fetchChecksum(ctx, release.ChecksumsURL, release.AssetName)

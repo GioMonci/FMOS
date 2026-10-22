@@ -9,6 +9,7 @@ import (
 func all() []Action {
 	return []Action{
 		{
+			ID:      "network-details",
 			Section: "network",
 			Name:    "Show network details",
 			Description: "Lists your network adapters with their IP addresses, " +

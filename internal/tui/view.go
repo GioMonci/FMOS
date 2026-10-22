@@ -29,7 +29,6 @@ var (
 	selectedStyle = lipgloss.NewStyle().Bold(true).Reverse(true)
 	mutedStyle    = lipgloss.NewStyle().Foreground(lipgloss.BrightBlack)
 	warningStyle  = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Red)
-	labelStyle    = lipgloss.NewStyle().Width(labelWidth)
 )
 
 // labelWidth fits the longest System panel label ("Uptime:") plus a space.
@@ -52,8 +51,11 @@ func (m model) render() string {
 	}
 
 	body := m.renderPanels(width)
-	if m.screen == taskScreen {
+	switch m.screen {
+	case taskScreen:
 		body = m.renderTask(width)
+	case reviewScreen:
+		body = m.renderReview(width)
 	}
 	parts := []string{header, body}
 	if m.logErr != nil {
@@ -189,6 +191,8 @@ func (m model) keyHints() string {
 	switch {
 	case m.screen == taskScreen:
 		return m.taskKeyHints()
+	case m.screen == reviewScreen:
+		return m.reviewKeyHints()
 	case m.screen == sectionScreen && m.section().id == "logs" && m.logsAvailable():
 		return "enter open logs folder • esc back • q quit"
 	case m.screen == sectionScreen && m.section().id == "updates" && m.updates.installing:
@@ -212,20 +216,33 @@ func (m model) systemPanelBody(width int) string {
 		return mutedStyle.Render("Loading system info...")
 	}
 
-	valueStyle := lipgloss.NewStyle().Width(max(width-labelWidth, 10))
-	var lines []string
+	var rows []row
 	for _, field := range m.info.Fields() {
 		value := field.Value
 		if value == "" {
 			value = mutedStyle.Render("Unknown")
 		}
-		lines = append(lines, lipgloss.JoinHorizontal(lipgloss.Top,
-			labelStyle.Render(field.Label+":"),
-			valueStyle.Render(value),
-		))
+		rows = append(rows, row{field.Label + ":", value})
 	}
+	lines := []string{labeledRows(rows, labelWidth, width)}
 	for _, problem := range m.info.Problems {
 		lines = append(lines, "", mutedStyle.Width(width).Render(problem))
+	}
+	return strings.Join(lines, "\n")
+}
+
+// row is one label and its value, such as "CPU:" and the processor name.
+type row struct{ label, value string }
+
+// labeledRows draws label and value rows fitted to width. Long values wrap
+// inside their own column so the labels stay lined up.
+func labeledRows(rows []row, labelWidth, width int) string {
+	labelStyle := lipgloss.NewStyle().Width(labelWidth)
+	valueStyle := lipgloss.NewStyle().Width(max(width-labelWidth, 10))
+	lines := make([]string, 0, len(rows))
+	for _, r := range rows {
+		lines = append(lines, lipgloss.JoinHorizontal(lipgloss.Top,
+			labelStyle.Render(r.label), valueStyle.Render(r.value)))
 	}
 	return strings.Join(lines, "\n")
 }

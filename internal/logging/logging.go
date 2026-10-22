@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/GioMonci/FMOS/internal/actions"
 	"github.com/GioMonci/FMOS/internal/platform"
 	"github.com/GioMonci/FMOS/internal/runner"
 	"github.com/GioMonci/FMOS/internal/sysinfo"
@@ -88,24 +89,22 @@ func (s *Session) LogSystemInfo(info sysinfo.Info) error {
 // LogAction writes everything about one finished action: the exact command,
 // whether FMOS ran as admin, timing, exit code, outcome, and full output. The
 // file is flushed to disk right away, in case the computer crashes later.
-func (s *Session) LogAction(name string, result runner.Result) error {
+func (s *Session) LogAction(action actions.Action, result runner.Result) error {
+	name := action.Name
 	exitCode := "none (the program did not run to completion)"
 	if result.ExitCode >= 0 {
 		exitCode = fmt.Sprint(result.ExitCode)
 	}
-	admin := "No"
-	if platform.IsAdmin() {
-		admin = "Yes"
-	}
-
 	var text strings.Builder
 	fmt.Fprintf(&text, "\nAction: %s\n", name)
 	fmt.Fprintf(&text, "  Command:   %s\n", result.Command)
-	fmt.Fprintf(&text, "  Admin:     %s\n", admin)
+	fmt.Fprintf(&text, "  Admin:     %s\n", yesNo(platform.IsAdmin()))
 	fmt.Fprintf(&text, "  Started:   %s\n", result.Started.Format(timeLayout))
 	fmt.Fprintf(&text, "  Duration:  %s\n", logDuration(result.Duration))
 	fmt.Fprintf(&text, "  Exit code: %s\n", exitCode)
 	fmt.Fprintf(&text, "  Outcome:   %s\n", result.Outcome)
+	fmt.Fprintf(&text, "  Changes the system:  %s\n", yesNo(action.ChangesSystem))
+	fmt.Fprintf(&text, "  May need a restart:  %s\n", yesNo(action.MayNeedRestart))
 	if result.Err != nil {
 		fmt.Fprintf(&text, "  Error:     %v\n", result.Err)
 	}
@@ -124,6 +123,13 @@ func (s *Session) LogAction(name string, result runner.Result) error {
 		return err
 	}
 	return s.file.Sync()
+}
+
+func yesNo(value bool) string {
+	if value {
+		return "Yes"
+	}
+	return "No"
 }
 
 // Note writes a short timestamped line, such as the result of an update check.

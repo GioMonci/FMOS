@@ -104,7 +104,7 @@ func (m model) updateTask(msg tea.Msg) (tea.Model, tea.Cmd) {
 		t.result = &result
 		t.notice = ""
 		if m.log != nil {
-			if err := m.log.LogAction(t.action.Name, result); err != nil {
+			if err := m.log.LogAction(t.action, result); err != nil {
 				m.logErr = err
 			}
 		}
@@ -177,6 +177,10 @@ func (m model) taskStatus() string {
 		}
 	} else {
 		status = resultSummary(*t.result)
+		if t.result.Outcome == runner.Finished && t.action.MayNeedRestart {
+			status += "\nYour computer may need a restart to finish. Restart it when it " +
+				"suits you; FMOS never restarts it by itself."
+		}
 		if m.logsAvailable() {
 			status += "\nThe full output is in this session's log (Logs > Open logs folder)."
 		}

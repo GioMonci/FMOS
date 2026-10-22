@@ -13,11 +13,22 @@ import (
 	"github.com/GioMonci/FMOS/internal/sysinfo"
 )
 
-// Run opens the FMOS menu and returns when the user quits. session is this
-// run's log, or nil when logs cannot be saved; logErr then explains why.
-func Run(version string, session *logging.Session, logErr error) error {
-	_, err := tea.NewProgram(newModel(version, session, logErr)).Run()
-	return err
+// Options are what FMOS opens its menu with.
+type Options struct {
+	Version    string
+	Log        *logging.Session // this run's log, or nil when logs cannot be saved
+	LogErr     error            // why logs cannot be saved, if they cannot
+	OpenAction string           // ID of an action to open on its review screen, if any
+}
+
+// Run opens the FMOS menu and returns when the user quits. restartedAsAdmin
+// is true when FMOS closed because a new copy opened as Administrator.
+func Run(opts Options) (restartedAsAdmin bool, err error) {
+	final, err := tea.NewProgram(newModel(opts)).Run()
+	if m, ok := final.(model); ok {
+		restartedAsAdmin = m.restartedAsAdmin
+	}
+	return restartedAsAdmin, err
 }
 
 // screen is the part of FMOS that is showing.
@@ -26,6 +37,7 @@ type screen int
 const (
 	menuScreen    screen = iota // the main menu
 	sectionScreen               // one section: its actions, or a "Coming soon" note
+	reviewScreen                // what an action will do, before the user confirms
 	taskScreen                  // an action running, or its result
 )
 
@@ -37,25 +49,32 @@ type model struct {
 	screen       screen
 	cursor       int              // selected menu item
 	actionCursor int              // selected action in the open section
-	notice       string           // short message shown in the open section
+	notice       string           // short message shown in the open section or review
 	info         sysinfo.Info     // details shown in the System panel
 	infoLoaded   bool             // false until the system details arrive
 	log          *logging.Session // nil when logs cannot be saved
 	logErr       error            // why logs cannot be saved, if they cannot
+	review       actions.Action   // the action on the review screen
 	task         *task            // the action running or last run, if any
 	updates      updateState      // checking for and installing a newer FMOS
+
+	restartedAsAdmin bool // FMOS is closing because a new copy opened as Administrator
 }
 
-func newModel(version string, session *logging.Session, logErr error) model {
+func newModel(opts Options) model {
 	// 80x24 is a safe guess until the terminal reports its real size.
-	return model{
-		version: version,
+	m := model{
+		version: opts.Version,
 		width:   80,
 		height:  24,
-		log:     session,
-		logErr:  logErr,
+		log:     opts.Log,
+		logErr:  opts.LogErr,
 		updates: updateState{checking: true},
 	}
+	if action, ok := actions.Find(opts.OpenAction); ok {
+		m = m.openReview(action)
+	}
+	return m
 }
 
 // systemInfoMsg delivers the system details once they have been gathered.
@@ -106,6 +125,8 @@ func (m model) handleKey(key string) (tea.Model, tea.Cmd) {
 	switch m.screen {
 	case taskScreen:
 		return m.handleTaskKey(key)
+	case reviewScreen:
+		return m.handleReviewKey(key)
 	case sectionScreen:
 		return m.handleSectionKey(key)
 	default:
@@ -154,7 +175,7 @@ func (m model) handleSectionKey(key string) (tea.Model, tea.Cmd) {
 		case m.section().id == "logs" && m.logsAvailable():
 			m.notice = m.openLogsFolder()
 		case len(sectionActions) > 0:
-			return m.startAction(sectionActions[m.actionCursor])
+			return m.chooseAction(sectionActions[m.actionCursor])
 		}
 	}
 	return m, nil

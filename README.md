@@ -90,12 +90,22 @@ can use right now.
 | `PgUp` `PgDn` `Home` `End` | Jump through an action's output |
 | `q` | Quit (not while an action or update is running) |
 
-FMOS also has two command-line options:
+**Before anything that changes your computer,** FMOS shows a review screen: what
+the action does, the exact command, whether it needs Administrator rights,
+internet, or a restart. Nothing happens until you press **Y**. Esc goes back.
+If an action needs Administrator rights, the same screen offers to restart FMOS
+as Administrator. Windows asks you to confirm, and FMOS reopens on that screen.
+
+FMOS also has a few command-line options:
 
 ```powershell
-.\fmos-x64.exe --help       # show the options
-.\fmos-x64.exe --version    # show the version number
+.\fmos-x64.exe --help                     # show the options
+.\fmos-x64.exe --version                  # show the version number
+.\fmos-x64.exe --open network-details     # open one action's review screen
 ```
+
+FMOS uses `--open` itself when it restarts as Administrator. Even then,
+nothing runs until you press Y.
 
 ## Features
 
@@ -164,7 +174,8 @@ see what's new, then press Enter on **Update to ...**.
 
 FMOS then:
 
-1. Downloads the new version from this project's GitHub Releases page.
+1. Downloads the new version from this project's GitHub Releases page, and
+   nowhere else.
 2. Checks it against the release's checksum, and refuses to use a damaged or
    altered file.
 3. Replaces itself. The new version starts the next time you open FMOS.
@@ -181,8 +192,10 @@ fine: FMOS says it could not check, and carries on.
 ## Safety and privacy
 
 - **FMOS does not change your system yet.** The only file it ever replaces is
-  itself, and only when you choose to update.
-- **No Administrator rights needed** for anything FMOS does so far.
+  itself, and only when you choose to update. When repairs arrive, each one
+  shows a review screen first and waits for you to press Y.
+- **No Administrator rights needed** for anything FMOS does so far. FMOS never
+  asks for them on its own. It only restarts as Administrator when you choose to.
 - **Nothing runs behind your back.** FMOS runs fixed, built-in tools by their
   full path, never through a command shell, and shows each command before you run it.
 - **It only goes online to check for updates.** The check is a normal web

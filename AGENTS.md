@@ -33,10 +33,11 @@ The repository contains the Go foundation (`cmd/fmos/main.go`) and the TUI
 command runner (`internal/runner/`), and a list of actions per OS
 (`internal/actions/`), and an update checker (`internal/update/`, the Updates
 menu section). The only action so far is Network > Show network details, which
-is read-only. OS Repair and Tools are still "Coming soon" placeholders. FMOS
-does not run repair commands or change the system yet. Step 6 (action review
-screen and admin restart) is postponed until it can be tested on Windows, so
-the release process (step 8 in `todo.md`) is next.
+is read-only. A review screen (`internal/tui/review.go`) guards system-changing
+and admin-only actions, and "Restart FMOS as Administrator" exists for Windows.
+OS Repair and Tools are still "Coming soon" placeholders. FMOS does not run
+repair commands or change the system yet. The release process (step 8 in
+`todo.md`) is next.
 
 ### Planned interface
 
@@ -473,7 +474,9 @@ In the TUI:
   on color alone to show meaning.
 * Handle small terminal windows. Stack the panels when there is not enough width.
 * For system-changing actions, use this flow: explanation, confirmation, run
-  with progress, summary.
+  with progress, summary. The review screen is the explanation and confirmation
+  step. It needs **Y** to go ahead (never Enter), so a repeated key press cannot
+  start anything by accident.
 * Print useful progress updates without spamming the user.
 
 Example tone:

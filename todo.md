@@ -54,6 +54,13 @@ been verified on a real machine or VM. Follow the rules in `AGENTS.md`.
 - [ ] Code signing: unsigned downloads trigger a Windows SmartScreen warning.
   That's acceptable for friends at first, because the install guide explains
   it. Decide later whether paid signing is worth it.
+- [ ] Release signing (deferred for now): sign each release with a private key
+  kept off GitHub, and have FMOS refuse updates without a valid signature
+  (`crypto/ed25519`, no new dependency). Without it, someone who got into the
+  GitHub account could publish a harmful update with a matching checksum.
+  Until then, the GitHub account must have two-factor login turned on. Copies
+  already handed out only gain this protection once they update to a version
+  that checks signatures.
 
 ## Phase 1: Go foundation and TUI
 
@@ -151,12 +158,20 @@ closing FMOS's window or pressing Ctrl+C does not interrupt them.
   may look wrong. SFC prints UTF-16 when its output is captured. Decode both
   properly when adding SFC (step 14).
 
-### 6. [ ] Add admin detection and the action review screen
+### 6. [x] Add admin detection and the action review screen
 
-**Postponed:** do this on Windows together with step 12 (the first repair
-actions). Nothing changes the system yet, so there is nothing to review, and
-the Administrator restart can only be tested on Windows.
+Verified on macOS with stand-in actions: the review screen, Y to confirm
+(Enter does nothing there), refusal without logs, the restart reminder, and
+`--open`. **Not tested yet:** the real Windows Administrator restart (the UAC
+prompt, choosing "No", and reopening on the same screen). No Windows action
+needs admin until step 12, so test it then.
 
+- Code: the review screen is in `internal/tui/review.go`. Restarting as
+  Administrator is in `internal/platform/elevate_windows.go`. Each action has a
+  stable `ID` used by `fmos --open <id>`.
+- The review screen appears for system-changing actions, and for actions that
+  need Administrator rights FMOS does not have. Read-only actions that need
+  nothing special still run right away.
 - Admin detection already exists (`platform.IsAdmin`, added in step 3).
 - Describe each action with its name, plain-English explanation, exact command,
   admin requirement, whether it changes the system, whether a restart may be
@@ -173,16 +188,18 @@ the Administrator restart can only be tested on Windows.
   **"Restart FMOS as Administrator"**. Choosing it shows the normal Windows
   "Yes/No" (UAC) prompt, opens a new FMOS as Administrator, and closes the old
   window. Use `ShellExecute` with the `runas` verb from `golang.org/x/sys/windows`.
-- The new FMOS opens where the user was. The old one passes the section and
-  action at startup (for example `--open os-repair/sfc`), and the new one opens
-  straight on that action's explanation and confirmation screen. It never runs
-  the action automatically, so the user still confirms. Only the section and
-  action carry over; anything else simply starts fresh.
+- The new FMOS opens where the user was. The old one passes the action's ID at
+  startup (for example `--open dism-checkhealth`), and the new one opens
+  straight on that action's review screen. It never runs the action
+  automatically, so the user still confirms. Only the action carries over;
+  anything else simply starts fresh.
 - If the user picks "No" on the prompt (Windows error 1223, "cancelled"), keep
   running without admin, say what will not work, and never ask again on its own.
 - On a standard (non-admin) Windows account, the Administrator copy runs as the
   admin account, so its log goes to that account's `%LOCALAPPDATA%` folder.
-  Pass the current log folder to the new copy so all logs stay in one place.
+  **Decided: not passing the log folder along.** An Administrator program
+  should not trust a folder path handed to it by a normal program. Most home
+  users have admin accounts, where both copies share one logs folder anyway.
 - **Not chosen: always starting as Administrator** (a `requireAdministrator`
   manifest). Most features do not need admin. A prompt on every launch teaches
   people to click "Yes" without reading. On a standard user account, the
@@ -214,6 +231,9 @@ download, which was rejected. Still to test: a real update from a real release
 - FMOS cannot quit while an update installs, so the program file is never left
   half-replaced. The previous version is kept as `<program>.old` until FMOS
   next starts.
+- Updates are only downloaded from
+  `https://github.com/GioMonci/FMOS/releases/download/`. A release whose links
+  point anywhere else is refused.
 - Builds whose version ends in `-dev` see the matching release as newer
   (`0.1.0-dev` < `0.1.0`). That is expected for builds made from source.
 
