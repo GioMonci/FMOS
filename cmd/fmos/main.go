@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/GioMonci/FMOS/internal/logging"
 	"github.com/GioMonci/FMOS/internal/tui"
 )
 
@@ -19,12 +20,7 @@ func main() {
 // run handles the command-line arguments and returns the exit code.
 func run(args []string) int {
 	if len(args) == 0 {
-		if err := tui.Run(version); err != nil {
-			fmt.Fprintf(os.Stderr, "FMOS could not open its menu: %v\n", err)
-			fmt.Fprintln(os.Stderr, "Try running FMOS in a terminal window, such as Windows Terminal.")
-			return 1
-		}
-		return 0
+		return openMenu()
 	}
 
 	switch args[0] {
@@ -39,6 +35,27 @@ func run(args []string) int {
 		printUsage()
 		return 1
 	}
+}
+
+// openMenu starts this session's log, opens the menu, and finishes the log
+// when the user quits.
+func openMenu() int {
+	session, logErr := logging.Start(version)
+	menuErr := tui.Run(version, session, logErr)
+
+	if session != nil {
+		if err := session.Close(); err != nil {
+			fmt.Fprintf(os.Stderr, "FMOS could not finish the log %s: %v\n", session.Path(), err)
+		} else {
+			fmt.Printf("Log saved to %s\n", session.Path())
+		}
+	}
+	if menuErr != nil {
+		fmt.Fprintf(os.Stderr, "FMOS could not open its menu: %v\n", menuErr)
+		fmt.Fprintln(os.Stderr, "Try running FMOS in a terminal window, such as Windows Terminal.")
+		return 1
+	}
+	return 0
 }
 
 func printUsage() {

@@ -6,11 +6,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/GioMonci/FMOS/internal/platform"
 )
 
 // windowsInfoScript asks Windows for system details with read-only queries
@@ -109,9 +110,9 @@ func readWindowsDetails(ctx context.Context) (windowsDetails, error) {
 // powerShellPath finds the built-in Windows PowerShell through the Windows
 // folder instead of trusting whatever is first on PATH.
 func powerShellPath() (string, error) {
-	windowsFolder := os.Getenv("SystemRoot")
-	if windowsFolder == "" {
-		return "", errors.New("the Windows folder (SystemRoot) is not set")
+	windowsFolder, err := platform.WindowsFolder()
+	if err != nil {
+		return "", err
 	}
 	return filepath.Join(windowsFolder, "System32", "WindowsPowerShell", "v1.0", "powershell.exe"), nil
 }

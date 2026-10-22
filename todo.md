@@ -32,8 +32,10 @@ been verified on a real machine or VM. Follow the rules in `AGENTS.md`.
 - **Updates:** FMOS checks GitHub for a newer release and updates itself only
   after the user confirms.
 - **Website:** one plain HTML/CSS page on GitHub Pages, served from `docs/`.
-- **Logs:** a `logs/` folder next to `fmos.exe`. The install guide tells
-  people to keep FMOS in a folder they own, such as `Documents\FMOS`.
+- **Logs:** the user's own app-data folder (`%LOCALAPPDATA%\FMOS\logs` on
+  Windows), wherever the FMOS program is, even Downloads. It is always
+  writable, not synced to OneDrive, and keeps every log in one place across
+  updates. People reach it through Logs > Open logs folder.
 
 ```text
 ┌─ System ─────────────────────────┐ ┌─ Menu ───────────┐
@@ -96,17 +98,24 @@ but it has not been run on Windows yet.
 - If a value cannot be read, show "Unknown" and explain why. Never crash the panel.
 - Keep this panel read-only.
 
-### 4. [ ] Add session logging
+### 4. [x] Add session logging
 
-- Create a timestamped session log in `logs/` next to `fmos.exe`, and show its full path.
-- Record date and time, OS, admin status, the exact command, exit code,
-  important output, errors, outcome, and whether a restart is recommended.
-- At the start of each session, log the System panel details and its
-  `Problems` (why any details were missing).
-- Check that the log folder is writable before running any action. If it is
-  not, explain why and suggest moving FMOS to a folder like `Documents\FMOS`.
-- End each session with a short plain-English summary: what ran, what passed,
-  what failed, and what needs follow-up.
+Verified on macOS: logs land in `~/Library/Logs/FMOS`, the warning appears when
+the folder cannot be created, two sessions in the same second get separate
+files, and quitting early is noted. Not yet run on Windows. The "Open logs
+folder" button has not been pressed in testing yet.
+
+- Create a timestamped session log (`fmos-YYYY-MM-DD_HH-MM-SS.txt`) in the
+  user's app-data folder: `%LOCALAPPDATA%\FMOS\logs` on Windows,
+  `~/Library/Logs/FMOS` on macOS, `~/.local/state/fmos/logs` on Linux.
+- Show the log's full path in the Logs section and after quitting, with an
+  "Open logs folder" button (File Explorer, Finder, or `xdg-open`).
+- At the start of each session, log the date and time, FMOS version, and the
+  System panel details (including OS and admin status) with their `Problems`.
+- Check that logs can be saved when FMOS starts. If not, keep running, show a
+  warning, and suggest checking disk space and reopening FMOS.
+- End each session with a short summary: when it ended, how long it ran, and
+  what was run.
 - Generated logs stay out of Git.
 
 ### 5. [ ] Add the command runner
@@ -117,6 +126,11 @@ but it has not been run on Windows yet.
   fake percentage progress.
 - Report each outcome clearly: tool not found, failed to start, failed,
   finished, or unclear result.
+- Log each action in the session log: the exact command, whether it ran as
+  admin, start time and duration, exit code, important output, errors,
+  outcome, and whether a restart is recommended. Extend the end-of-session
+  summary with what passed, what failed, and what needs follow-up.
+- Refuse to run system-changing actions when logs cannot be saved.
 - Decide how cancellation works for each tool. Stopping a queue prevents the
   next task from starting, but does not abruptly kill a repair that is running.
 - Test with harmless commands (`whoami`, `ipconfig`) before wiring up repairs.
@@ -146,6 +160,9 @@ but it has not been run on Windows yet.
   action carry over; anything else simply starts fresh.
 - If the user picks "No" on the prompt (Windows error 1223, "cancelled"), keep
   running without admin, say what will not work, and never ask again on its own.
+- On a standard (non-admin) Windows account, the Administrator copy runs as the
+  admin account, so its log goes to that account's `%LOCALAPPDATA%` folder.
+  Pass the current log folder to the new copy so all logs stay in one place.
 - **Not chosen: always starting as Administrator** (a `requireAdministrator`
   manifest). Most features do not need admin. A prompt on every launch teaches
   people to click "Yes" without reading. On a standard user account, the
@@ -200,13 +217,14 @@ SmartScreen warnings, and updates with friends before any repair features exist.
 - Cover these points:
   - Which file to download (`fmos-x64.exe` or `fmos-arm64.exe`). Settings >
     System > About shows "x64-based processor" or "ARM-based processor".
-  - Making a `Documents\FMOS` folder and saving the file there.
+  - Where to keep the file: anywhere they own, such as Downloads or the
+    Desktop. Not `C:\Program Files`, where FMOS cannot update itself.
   - The browser download warning, and SmartScreen's "More info > Run anyway",
     including why each one appears.
   - Opening FMOS, and what the Administrator (Yes/No) prompt looks like when
     FMOS asks to restart as Administrator, including why it says "Unknown publisher".
   - How updates work.
-  - How to send logs for help.
+  - How to send logs for help: Logs > Open logs folder, then send the newest file.
   - How to remove FMOS (delete the folder).
 - Add screenshots once the TUI exists.
 
@@ -399,6 +417,9 @@ The goal is to help answer "why am I lagging?"
   official downloads.
 - Maintenance presets (office, engineering, gaming) and client-ready reports.
 - An optional active network scan of the user's own network.
+- View logs inside FMOS.
+- Clean up old logs automatically (for example, keep the newest 50). Only ever
+  delete FMOS's own `fmos-*.txt` files, never anything else in the folder.
 
 ## Scope boundaries
 

@@ -7,28 +7,34 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/GioMonci/FMOS/internal/logging"
+	"github.com/GioMonci/FMOS/internal/platform"
 	"github.com/GioMonci/FMOS/internal/sysinfo"
 )
 
-// Run opens the FMOS menu and returns when the user quits.
-func Run(version string) error {
-	_, err := tea.NewProgram(newModel(version)).Run()
+// Run opens the FMOS menu and returns when the user quits. session is this
+// run's log, or nil when logs cannot be saved; logErr then explains why.
+func Run(version string, session *logging.Session, logErr error) error {
+	_, err := tea.NewProgram(newModel(version, session, logErr)).Run()
 	return err
 }
 
 // model holds everything the menu needs to draw itself.
 type model struct {
 	version    string
-	width      int          // terminal width in columns
-	cursor     int          // index of the selected menu item
-	open       bool         // true while the selected section is showing
-	info       sysinfo.Info // details shown in the System panel
-	infoLoaded bool         // false until the system details arrive
+	width      int              // terminal width in columns
+	cursor     int              // index of the selected menu item
+	open       bool             // true while the selected section is showing
+	info       sysinfo.Info     // details shown in the System panel
+	infoLoaded bool             // false until the system details arrive
+	log        *logging.Session // nil when logs cannot be saved
+	logErr     error            // why logs cannot be saved, if they cannot
+	logsStatus string           // result of the last "Open logs folder"
 }
 
-func newModel(version string) model {
+func newModel(version string, session *logging.Session, logErr error) model {
 	// 80 columns is a safe guess until the terminal reports its real size.
-	return model{version: version, width: 80}
+	return model{version: version, width: 80, log: session, logErr: logErr}
 }
 
 // systemInfoMsg delivers the system details once they have been gathered.
@@ -53,6 +59,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case systemInfoMsg:
 		m.info = sysinfo.Info(msg)
 		m.infoLoaded = true
+		if m.log != nil {
+			if err := m.log.LogSystemInfo(m.info); err != nil {
+				m.logErr = err
+			}
+		}
 	case tea.KeyPressMsg:
 		return m.handleKey(msg.String())
 	}
@@ -66,8 +77,14 @@ func (m model) handleKey(key string) (tea.Model, tea.Cmd) {
 	}
 
 	if m.open {
-		if key == "esc" {
+		switch key {
+		case "esc":
 			m.open = false
+			m.logsStatus = ""
+		case "enter":
+			if menuItems[m.cursor].id == "logs" && m.logsAvailable() {
+				m.logsStatus = m.openLogsFolder()
+			}
 		}
 		return m, nil
 	}
@@ -82,10 +99,24 @@ func (m model) handleKey(key string) (tea.Model, tea.Cmd) {
 			m.cursor++
 		}
 	case "enter":
-		if menuItems[m.cursor].quits {
+		if menuItems[m.cursor].id == "quit" {
 			return m, tea.Quit
 		}
 		m.open = true
 	}
 	return m, nil
+}
+
+// logsAvailable reports whether this session's log is being saved.
+func (m model) logsAvailable() bool {
+	return m.log != nil && m.logErr == nil
+}
+
+// openLogsFolder opens the logs folder in the system's file manager and
+// returns a short message saying how it went.
+func (m model) openLogsFolder() string {
+	if err := platform.OpenFolder(m.log.Dir()); err != nil {
+		return "Could not open the logs folder: " + err.Error()
+	}
+	return "Opened the logs folder."
 }

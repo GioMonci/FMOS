@@ -26,6 +26,7 @@ var (
 	titleStyle    = lipgloss.NewStyle().Bold(true)
 	selectedStyle = lipgloss.NewStyle().Bold(true).Reverse(true)
 	mutedStyle    = lipgloss.NewStyle().Foreground(lipgloss.BrightBlack)
+	warningStyle  = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Red)
 	labelStyle    = lipgloss.NewStyle().Width(labelWidth)
 )
 
@@ -39,15 +40,17 @@ func (m model) View() tea.View {
 	return v
 }
 
-// render draws the whole screen: header, panels, and key hints.
+// render draws the whole screen: header, panels, a warning when logs cannot
+// be saved, and key hints.
 func (m model) render() string {
 	width := min(m.width, maxWidth)
 	header := titleStyle.Render("FMOS (Fix My OS)") + mutedStyle.Render("  version "+m.version)
-	return lipgloss.JoinVertical(lipgloss.Left,
-		header,
-		m.renderPanels(width),
-		mutedStyle.Render(m.keyHints()),
-	)
+	parts := []string{header, m.renderPanels(width)}
+	if m.logErr != nil {
+		parts = append(parts, warningStyle.Width(width).Render("Warning: "+logProblem(m.logErr)))
+	}
+	parts = append(parts, mutedStyle.Render(m.keyHints()))
+	return lipgloss.JoinVertical(lipgloss.Left, parts...)
 }
 
 // renderPanels places the system panel and the menu side by side, or stacks
@@ -89,6 +92,9 @@ func panel(title, body string, width, height int) string {
 // rightPanelContent returns the menu, or the screen of the open section.
 func (m model) rightPanelContent() (title, body string) {
 	selected := menuItems[m.cursor]
+	if m.open && selected.id == "logs" {
+		return selected.title, m.logsBody()
+	}
 	if m.open {
 		return selected.title, selected.description + "\n\n" +
 			mutedStyle.Render("Coming soon. This part of FMOS has not been built yet.")
@@ -105,7 +111,34 @@ func (m model) rightPanelContent() (title, body string) {
 	return "Menu", strings.Join(lines, "\n") + "\n\n" + mutedStyle.Render(selected.description)
 }
 
+// logsBody shows where this session's log is being saved, with a button to
+// open the logs folder.
+func (m model) logsBody() string {
+	if !m.logsAvailable() {
+		return logProblem(m.logErr)
+	}
+	body := "This session is being saved to:\n" + m.log.Path() + "\n\n" +
+		selectedStyle.Render("> Open logs folder")
+	if m.logsStatus != "" {
+		body += "\n\n" + mutedStyle.Render(m.logsStatus)
+	}
+	return body
+}
+
+// logProblem explains why logs cannot be saved and what to do about it.
+func logProblem(err error) string {
+	reason := "the reason is unknown"
+	if err != nil {
+		reason = err.Error()
+	}
+	return "FMOS cannot save logs (" + reason + "). Check that your disk has free " +
+		"space, then close FMOS and open it again."
+}
+
 func (m model) keyHints() string {
+	if m.open && menuItems[m.cursor].id == "logs" && m.logsAvailable() {
+		return "enter open logs folder • esc back • q quit"
+	}
 	if m.open {
 		return "esc back • q quit"
 	}
@@ -120,35 +153,19 @@ func (m model) systemPanelBody(width int) string {
 		return mutedStyle.Render("Loading system info...")
 	}
 
-	info := m.info
-	admin := "No"
-	if info.Admin {
-		admin = "Yes"
-	}
-	rows := []struct{ label, value string }{
-		{"OS", info.OS},
-		{"CPU", info.CPU},
-		{"GPU", info.GPU},
-		{"RAM", info.RAM},
-		{"Disk", info.Disk},
-		{"Uptime", info.Uptime},
-		{"User", info.User},
-		{"Admin", admin},
-	}
-
 	valueStyle := lipgloss.NewStyle().Width(max(width-labelWidth, 10))
-	lines := make([]string, 0, len(rows))
-	for _, row := range rows {
-		value := row.value
+	var lines []string
+	for _, field := range m.info.Fields() {
+		value := field.Value
 		if value == "" {
 			value = mutedStyle.Render("Unknown")
 		}
 		lines = append(lines, lipgloss.JoinHorizontal(lipgloss.Top,
-			labelStyle.Render(row.label+":"),
+			labelStyle.Render(field.Label+":"),
 			valueStyle.Render(value),
 		))
 	}
-	for _, problem := range info.Problems {
+	for _, problem := range m.info.Problems {
 		lines = append(lines, "", mutedStyle.Width(width).Render(problem))
 	}
 	return strings.Join(lines, "\n")

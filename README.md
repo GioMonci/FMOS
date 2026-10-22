@@ -93,7 +93,9 @@ go run ./cmd/fmos
 ## Current status
 
 FMOS currently shows a System panel and its menu (OS Repair, Tools, Network,
-and Logs). Every menu section is a placeholder that says "Coming soon".
+and Logs), and saves a log of each session (see [Logs](#logs)). The Logs
+section shows where the log is saved. The other sections are placeholders that
+say "Coming soon".
 
 The System panel shows your OS, CPU, GPU, RAM, disk space, uptime, user, and
 whether FMOS is running as Administrator. It only reads information and never
@@ -112,7 +114,30 @@ changes anything.
 Repair commands will be added carefully, with clear explanations,
 confirmations, and logging before any system-changing behavior is introduced.
 
-Runtime logs will be stored in `logs/`. Generated logs are ignored by Git.
+## Logs
+
+Every time FMOS opens, it saves a log of that session, for example
+`fmos-2026-10-22_13-45-10.txt`. The log lists your system details and a
+summary of the session. You can open it with Notepad or any text editor, and
+send it to someone helping you.
+
+**To find your logs:** open FMOS, choose **Logs**, and press Enter on
+**Open logs folder**. FMOS also prints the log's location when you quit.
+
+Logs are saved in your own user folder, no matter where the FMOS program is
+(even if it is still in Downloads):
+
+| System | Logs folder |
+| --- | --- |
+| Windows | `%LOCALAPPDATA%\FMOS\logs`, for example `C:\Users\you\AppData\Local\FMOS\logs` |
+| macOS | `~/Library/Logs/FMOS` |
+| Linux | `~/.local/state/fmos/logs` |
+
+Logs contain details about your PC, such as your user name, so only share them
+with people you trust.
+
+If FMOS cannot save logs, it shows a warning and keeps working. Check that your
+disk has free space, then close FMOS and open it again.
 
 ## Safety
 

@@ -29,9 +29,10 @@ The roadmap and the order of work live in `todo.md`.
 
 The repository contains the Go foundation (`cmd/fmos/main.go`) and the TUI
 (`internal/tui/`): a System panel with real, read-only system details
-(`internal/sysinfo/`), and a menu where every section is still a "Coming soon"
-placeholder. It does not run repair commands or change the system. Session
-logging is next (step 4 in `todo.md`).
+(`internal/sysinfo/`), a session log for every run (`internal/logging/`), and a
+menu where only the Logs section is real. The others are still "Coming soon"
+placeholders. FMOS does not run repair commands or change the system. The
+command runner is next (step 5 in `todo.md`).
 
 ### Planned interface
 
@@ -198,8 +199,8 @@ Risky actions should have:
 ## Distribution and Updates
 
 * FMOS ships as a single portable `fmos.exe` on GitHub Releases. There is no installer.
-* Users keep FMOS in a folder they own (for example `Documents\FMOS`). Logs go
-  in a `logs/` folder next to the exe.
+* Users can run FMOS from any folder they own, including Downloads. Logs do not
+  depend on where the exe is (see Logging Requirements).
 * FMOS may check GitHub for a newer release, but it updates only after the user
   confirms. Never update silently.
 * Verify the SHA-256 checksum of a downloaded update before replacing the
@@ -288,13 +289,18 @@ Logs should include:
 * Error messages
 * Whether a restart is recommended
 
-Logs should be saved in:
+Logs are saved as one file per session (`fmos-YYYY-MM-DD_HH-MM-SS.txt`) in the
+user's own app-data folder, wherever the FMOS program is:
 
-```text
-logs/
-```
+| System | Logs folder |
+| --- | --- |
+| Windows | `%LOCALAPPDATA%\FMOS\logs` |
+| macOS | `~/Library/Logs/FMOS` |
+| Linux | `$XDG_STATE_HOME/fmos/logs` (usually `~/.local/state/fmos/logs`) |
 
-Do not store logs in random locations.
+Do not store logs anywhere else, and never inside the repository. Users reach
+them through Logs > Open logs folder, so messages should point there instead of
+to a path.
 
 ## Folder Structure
 
@@ -304,10 +310,10 @@ Current project structure:
 .
 ├── cmd/fmos/             main package: opens the TUI, handles --help and --version
 ├── internal/
-│   ├── tui/              Bubble Tea screens: System panel and menu (sections are placeholders)
+│   ├── tui/              Bubble Tea screens: System panel, menu, and Logs section
 │   ├── sysinfo/          System panel data (Windows query, or fastfetch on macOS/Linux)
-│   └── platform/         Admin/root detection
-├── logs/                 Runtime logs and log documentation
+│   ├── logging/          Session logs in the user's app-data folder
+│   └── platform/         Admin/root detection, opening folders, Windows folder
 ├── go.mod                Go module definition
 ├── go.sum                Dependency checksums
 ├── README.md             User instructions
@@ -328,9 +334,8 @@ Planned Go structure:
 │   ├── actions/          Action definitions per OS (actions_windows.go, ...)
 │   ├── runner/           Runs external commands, streams and captures output
 │   ├── platform/         Admin/root detection and other small OS helpers
-│   └── logging/          Session logs in logs/
+│   └── logging/          Session logs in the user's app-data folder
 ├── docs/                 GitHub Pages website (index.html, style.css)
-├── logs/
 ├── go.mod
 └── go.sum
 ```
@@ -338,7 +343,7 @@ Planned Go structure:
 This is the target shape, not something to scaffold all at once. Create a
 package only when a feature needs it.
 
-Keep generated logs in `logs/`. `docs/` holds only the GitHub Pages website.
+Generated logs never go in the repository. `docs/` holds only the GitHub Pages website.
 Do not add a `tests/` directory unless the user asks for one. Tests and GitHub Actions are intentionally
 deferred during this early rebuild. When tests are added, Go tests go next to
 the code as `_test.go` files.
@@ -469,7 +474,7 @@ Example:
 ```text
 SFC completed successfully.
 Windows did not report any integrity violations.
-Log saved to logs/sfc-2026-07-06.txt
+The details are in this session's log (Logs > Open logs folder).
 ```
 
 ## User Experience Guidelines
@@ -549,7 +554,7 @@ Something went wrong.
 Prefer:
 
 ```text
-DISM could not complete the repair. This may happen if Windows Update is unavailable or the component store is damaged. The full output was saved to logs/dism-restorehealth.txt.
+DISM could not complete the repair. This may happen if Windows Update is unavailable or the component store is damaged. The full output is in this session's log (Logs > Open logs folder).
 ```
 
 ## Configuration
@@ -645,20 +650,10 @@ Before adding a dependency, consider whether the standard library or existing to
 
 ## Generated Files
 
-Generated runtime logs should go into:
-
-```text
-logs/
-```
-
-Examples:
-
-```text
-logs/
-├── sfc-2026-07-06.txt
-├── dism-checkhealth-2026-07-06.txt
-└── setup-apps-2026-07-06.txt
-```
+Generated logs go in the user's app-data folder described in Logging
+Requirements, one file per session, for example `fmos-2026-07-06_14-30-00.txt`.
+Each action in the session (SFC, DISM, app installs) is a section of that file,
+not a separate file.
 
 Build output belongs in the ignored `build/` directory. Do not place generated
 files inside source folders.
@@ -697,7 +692,7 @@ Example:
 Changed:
 - Added an SFC repair action to the OS Repair menu.
 - Added admin permission detection.
-- Added log saving to logs/.
+- Added SFC results to the session log.
 
 Run:
 fmos  (then OS Repair > System File Checker)

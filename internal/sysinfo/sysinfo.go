@@ -28,6 +28,31 @@ type Info struct {
 	Problems []string
 }
 
+// Field is one labeled detail, such as "CPU" and its value.
+type Field struct {
+	Label string
+	Value string // empty when the value could not be read
+}
+
+// Fields lists the details in display order. The System panel and the
+// session log both use it, so they always show the same things.
+func (info Info) Fields() []Field {
+	admin := "No"
+	if info.Admin {
+		admin = "Yes"
+	}
+	return []Field{
+		{"OS", info.OS},
+		{"CPU", info.CPU},
+		{"GPU", info.GPU},
+		{"RAM", info.RAM},
+		{"Disk", info.Disk},
+		{"Uptime", info.Uptime},
+		{"User", info.User},
+		{"Admin", admin},
+	}
+}
+
 // Gather collects system information. It never fails as a whole: anything
 // that cannot be read is left empty and explained in Problems.
 func Gather(ctx context.Context) Info {

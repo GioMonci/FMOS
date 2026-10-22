@@ -19,10 +19,9 @@ $RECYCLE.BIN/
 .env.*
 !.env.example
 
-# Logs and temporary files
+# Logs and temporary files (FMOS saves its own logs outside the repository)
 *.log
-logs/*
-!logs/README.md
+logs/
 temp/
 tmp/
 
