@@ -1,45 +1,69 @@
 # FMOS
 
-FMOS (Fix My OS) is a Windows repair, maintenance, and first-time setup helper.
+FMOS (Fix My OS) is a terminal app that puts common OS repair, maintenance, and
+troubleshooting tools in one place. Windows is the main target. macOS and
+Ubuntu support will come later.
 
-The project has been reset and is being rebuilt in C++. Repair and setup
-features have not been added yet.
+The project is being rebuilt in Go. Repair, tools, and network features have
+not been added yet. See [todo.md](todo.md) for the roadmap.
 
 ## Requirements
 
-- Windows 10 or Windows 11
-- A C++17-compatible compiler
-- CMake 3.20 or newer
+- Windows 10 or Windows 11 (64-bit)
+- [Go](https://go.dev/dl/) 1.27 or newer, to build FMOS
 
 ## Build
 
 From PowerShell in the project folder:
 
 ```powershell
-cmake -S . -B build
-cmake --build build --config Release
+go build -o build/fmos.exe ./cmd/fmos
 ```
 
-The executable will be in `build/Release/` when using Visual Studio, or directly
-in `build/` with a single-configuration generator.
+The program is saved as `build\fmos.exe`.
+
+To build the Windows version from macOS or Linux:
+
+```bash
+CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o build/fmos.exe ./cmd/fmos
+```
 
 ## Run
 
 ```powershell
-.\build\Release\fmos.exe help
+.\build\fmos.exe --help
+```
+
+Expected output:
+
+```text
+FMOS (Fix My OS)
+
+Usage:
+  fmos --help       Show this help message.
+  fmos --version    Show the FMOS version.
+
+The FMOS menu is not available yet. For now, FMOS only shows this help.
+```
+
+You can also run FMOS without building it first:
+
+```powershell
+go run ./cmd/fmos --help
 ```
 
 ## Current status
 
-FMOS currently provides only a small command-line foundation. Windows repair
-commands will be added carefully, with clear confirmations and logging before
-any system-changing behavior is introduced.
+FMOS currently provides only a small command-line foundation. The menu-based
+terminal interface comes next. Repair commands will be added carefully, with
+clear explanations, confirmations, and logging before any system-changing
+behavior is introduced.
 
 Runtime logs will be stored in `logs/`. Generated logs are ignored by Git.
 
 ## Safety
 
-FMOS does not currently run repair commands or modify Windows.
+FMOS does not currently run repair commands or change your system.
 
 ## Contributing
 

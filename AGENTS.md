@@ -22,10 +22,9 @@ The roadmap and the order of work live in `todo.md`.
 
 ### Current state
 
-The repository still contains the old minimal C++17 command-line foundation
-(`src/main.cpp`, `CMakeLists.txt`). It does not run repair commands or change
-the system. It is being replaced by a Go rewrite (step 1 in `todo.md`). Do not
-add features to the C++ code.
+The repository contains a minimal Go command-line foundation
+(`cmd/fmos/main.go`). It only prints help and version information. It does not
+run repair commands or change the system. The TUI is next (step 2 in `todo.md`).
 
 ### Planned interface
 
@@ -278,13 +277,13 @@ Do not store logs in random locations.
 
 ## Folder Structure
 
-Current project structure (before the Go rewrite):
+Current project structure:
 
 ```text
 .
-├── src/                  Old C++ foundation (to be removed in todo.md step 1)
+├── cmd/fmos/             main package (help and version only for now)
 ├── logs/                 Runtime logs and log documentation
-├── CMakeLists.txt        Old CMake build (to be removed in todo.md step 1)
+├── go.mod                Go module definition
 ├── README.md             User instructions
 ├── CONTRIBUTING.md       Contributor instructions
 ├── AGENTS.md             Instructions for AI coding agents
@@ -319,9 +318,8 @@ the code as `_test.go` files.
 
 ## Build System
 
-FMOS will use Go (a currently supported release) as a single module with
-`go.mod` at the repository root. Until todo.md step 1 is done, the old CMake
-build is still what builds.
+FMOS uses Go (1.27 or newer) as a single module, `github.com/GioMonci/FMOS`,
+with `go.mod` at the repository root.
 
 Build and run from PowerShell:
 
