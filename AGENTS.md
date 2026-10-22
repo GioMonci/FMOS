@@ -11,6 +11,11 @@ one simple, beginner-friendly menu. The goal is to make common repair tasks
 easier, safer, and less annoying for people who do not want to remember
 commands like `sfc`, `dism`, `chkdsk`, or app setup steps.
 
+FMOS is for the project owner, their friends, and people whose PCs they built.
+Most of these users are not technical. FMOS should help them fix common
+problems, or collect logs to send for help, without someone having to fix the
+PC in person.
+
 **Windows is the main target and is built first.** macOS and Ubuntu Linux get
 support later, for features that make sense there.
 
@@ -186,6 +191,18 @@ Risky actions should have:
   hand the terminal over with `tea.ExecProcess`. FMOS never asks for or stores passwords.
 * If a tool is missing, say which tool it is and how to get it.
 
+## Distribution and Updates
+
+* FMOS ships as a single portable `fmos.exe` on GitHub Releases. There is no installer.
+* Users keep FMOS in a folder they own (for example `Documents\FMOS`). Logs go
+  in a `logs/` folder next to the exe.
+* FMOS may check GitHub for a newer release, but it updates only after the user
+  confirms. Never update silently.
+* Verify the SHA-256 checksum of a downloaded update before replacing the
+  running exe. If any step fails, keep the current version working.
+* An update check must never block or slow down the menu. Being offline is
+  normal, not an error.
+
 ## Windows Repair Commands
 
 FMOS may use commands such as:
@@ -303,6 +320,7 @@ Planned Go structure:
 │   ├── runner/           Runs external commands, streams and captures output
 │   ├── platform/         Admin/root detection and other small OS helpers
 │   └── logging/          Session logs in logs/
+├── docs/                 GitHub Pages website (index.html, style.css)
 ├── logs/
 ├── go.mod
 └── go.sum
@@ -311,8 +329,8 @@ Planned Go structure:
 This is the target shape, not something to scaffold all at once. Create a
 package only when a feature needs it.
 
-Keep generated logs in `logs/`. Do not add a `docs/` or `tests/` directory
-unless the user asks for one. Tests and GitHub Actions are intentionally
+Keep generated logs in `logs/`. `docs/` holds only the GitHub Pages website.
+Do not add a `tests/` directory unless the user asks for one. Tests and GitHub Actions are intentionally
 deferred during this early rebuild. When tests are added, Go tests go next to
 the code as `_test.go` files.
 
@@ -547,12 +565,17 @@ Never commit:
 
 If secrets are needed, use environment variables or ignored local config files.
 
+FMOS uses the network only for update checks and for features the user picks.
+Never send logs or system information anywhere automatically. Sharing logs is
+always something the user does on purpose.
+
 ## Documentation Rules
 
 Documentation should be beginner-friendly.
 
-Keep project documentation in the root `README.md` for now. Do not recreate the
-`docs/` directory unless the user requests it or the README becomes too large.
+Keep project documentation in the root `README.md`. The `docs/` folder holds
+only the GitHub Pages website: plain HTML and CSS, no frameworks, and no build
+step. When install or update steps change, update both the README and the website.
 
 When adding a feature, update documentation with:
 
