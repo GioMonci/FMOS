@@ -222,8 +222,8 @@ SmartScreen warnings, and updates with friends before any repair features exist.
 Verified on macOS and Windows. The check against the real GitHub works: with
 no release yet, it says "This is the newest version". Download, checksum,
 swap, and cleanup were tested on macOS against a stand-in GitHub server,
-including a tampered download, which was rejected. Still to test: a real
-update from a real release, including the swap on Windows (step 11).
+including a tampered download, which was rejected. A real update from the
+v0.1.1 release works on macOS and Windows, including the swap and cleanup.
 
 - Code: `internal/update` (check, download, verify, swap, clean up) and the
   Updates section in the menu (`internal/tui/updates.go`).
@@ -253,9 +253,16 @@ update from a real release, including the swap on Windows (step 11).
 - Log every check and every update. Use only the standard library (`net/http`,
   `crypto/sha256`).
 
-### 8. [ ] Set up the release process and publish v0.1.0
+### 8. [x] Set up the release process and publish the first release
 
-**Release process: done and tested.** Still to do: publish v0.1.0.
+**Published v0.1.1** (the first release) on GitHub: tag `v0.1.1` on commit
+`353dfe0`, with `fmos-x64.exe`, `fmos-arm64.exe`, `fmos-macos`, and
+`SHA256SUMS.txt`. Checked after publishing:
+
+- The files on GitHub are identical to the checked local files, and match
+  their fingerprints.
+- A real update from GitHub works on macOS and Windows: older copies updated
+  themselves to 0.1.1, and the `.old` copy was cleaned up on the next start.
 
 - `scripts/release.ps1` is the Windows version, with the same steps and checks.
   It has not been run yet: try it on Windows with a test version such as
@@ -314,6 +321,10 @@ update from a real release, including the swap on Windows (step 11).
 - Keep its steps in sync with the README install guide.
 
 ### 11. [ ] Test the first release with friends
+
+Updating itself already works on Windows (tested with v0.1.1 in step 8), so
+this step is mostly about whether someone else can get FMOS running from the
+guide alone.
 
 - Have one or two people install FMOS from the website without help.
 - Publish a small new version and confirm that their copy updates itself.

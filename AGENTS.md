@@ -36,8 +36,8 @@ menu section). The only action so far is Network > Show network details, which
 is read-only. A review screen (`internal/tui/review.go`) guards system-changing
 and admin-only actions, and "Restart FMOS as Administrator" exists for Windows.
 OS Repair and Tools are still "Coming soon" placeholders. FMOS does not run
-repair commands or change the system yet. The release process (step 8 in
-`todo.md`) is next.
+repair commands or change the system yet. The first release, v0.1.1, is
+published on GitHub. The install guide (step 9 in `todo.md`) is next.
 
 ### Planned interface
 
