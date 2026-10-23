@@ -34,7 +34,7 @@ log you can send to someone helping you.
 | [System panel](#system-panel) | Shows your OS, CPU, GPU, RAM, disk space, and more | Yes | Yes, with fastfetch | Yes, with fastfetch |
 | [Show network details](#network--show-network-details) | Lists your network adapters and addresses | Yes | Yes | Yes |
 | [Logs](#logs) | Saves a log of every session, one key to open them | Yes | Yes | Yes |
-| [Updates](#updates) | Checks for a new version and installs it when you choose | Yes | Checks only | Checks only |
+| [Updates](#updates) | Checks for a new version and installs it when you choose | Yes | Yes | Checks only |
 
 **Coming next:** system file and disk repairs (SFC, DISM, CHKDSK), installing
 and updating apps (winget), driver and Microsoft Store updates, Microsoft
@@ -52,9 +52,23 @@ Pick the file for your computer:
 | --- | --- |
 | `fmos-x64.exe` | Windows on Intel or AMD (almost all desktops and laptops) |
 | `fmos-arm64.exe` | Windows on ARM (for example, Snapdragon laptops) |
+| `fmos-macos` | macOS on Apple Silicon (M1 and newer) |
 
-Not sure which one? Open **Settings > System > About** and look at
-**System type**. It says either "x64-based processor" or "ARM-based processor".
+Not sure which Windows file you need? Open **Settings > System > About** and
+look at **System type**. It says either "x64-based processor" or
+"ARM-based processor".
+
+Each release also has a `SHA256SUMS.txt` file with each program's fingerprint.
+FMOS uses it to check its own updates, so you can ignore it.
+
+**On a Mac,** a downloaded program is blocked until you allow it. In Terminal:
+
+```bash
+cd ~/Downloads
+chmod +x fmos-macos      # allow it to run as a program
+xattr -c fmos-macos      # remove the "downloaded from the internet" block
+./fmos-macos
+```
 
 ## Using FMOS
 
@@ -269,22 +283,22 @@ No Git? On the [GitHub page](https://github.com/GioMonci/FMOS), choose
 
 ### 3. Build
 
-Run these from the `FMOS` folder. The program is saved in its `build` folder.
+Run these from the `FMOS` folder. The program is saved in the `build\dev` folder.
 
 **Windows (PowerShell):**
 
 ```powershell
 $env:CGO_ENABLED = "0"
-$env:GOARCH = "amd64"; go build -o build/fmos-x64.exe ./cmd/fmos
-$env:GOARCH = "arm64"; go build -o build/fmos-arm64.exe ./cmd/fmos
+$env:GOARCH = "amd64"; go build -o build/dev/fmos-x64.exe ./cmd/fmos
+$env:GOARCH = "arm64"; go build -o build/dev/fmos-arm64.exe ./cmd/fmos
 Remove-Item Env:CGO_ENABLED, Env:GOARCH
 ```
 
 **macOS or Ubuntu:**
 
 ```bash
-CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -o build/fmos-macos ./cmd/fmos
-CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o build/fmos-linux ./cmd/fmos
+CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -o build/dev/fmos-macos ./cmd/fmos
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o build/dev/fmos-linux ./cmd/fmos
 ```
 
 The macOS file is for Apple Silicon Macs (M1 and newer).
@@ -293,12 +307,35 @@ The macOS file is for Apple Silicon Macs (M1 and newer).
 
 | System | Command |
 | --- | --- |
-| Windows on Intel or AMD | `.\build\fmos-x64.exe` |
-| Windows on ARM | `.\build\fmos-arm64.exe` |
-| macOS | `./build/fmos-macos` |
-| Ubuntu | `./build/fmos-linux` |
+| Windows on Intel or AMD | `.\build\dev\fmos-x64.exe` |
+| Windows on ARM | `.\build\dev\fmos-arm64.exe` |
+| macOS | `./build/dev/fmos-macos` |
+| Ubuntu | `./build/dev/fmos-linux` |
 
-On Windows you can also double-click the file in the `build` folder.
+On Windows you can also double-click the file in the `build\dev` folder.
+
+### Development builds and release builds
+
+The `build` folder has two kinds of builds, kept in separate folders so they
+never get mixed up:
+
+| Folder | Made by | Version shown | What it is for |
+| --- | --- | --- | --- |
+| `build/dev/` | The build commands above | `0.1.0-dev` | Trying out changes on your own computer |
+| `build/release/v0.1.0/` | `scripts/release.sh 0.1.0` (Mac) or `scripts\release.ps1 0.1.0` (Windows) | `0.1.0` | Uploading to GitHub Releases, and nothing else |
+
+Release builds have the same file names as development builds, because the
+updater and the download links look for those exact names. To tell them apart:
+
+- **The folder.** Only upload files from a `build/release/vX.Y.Z/` folder.
+- **The version.** Run the program with `--version`. Release builds say
+  `FMOS 0.1.0`; development builds say `FMOS 0.1.0-dev`.
+- **The fingerprint.** `SHA256SUMS.txt` in the release folder lists each
+  file's fingerprint, and the release script prints the first few characters.
+
+The release script also strips this computer's folder paths out of the files
+(`-trimpath`), and stops with an error if any are left. See
+[CONTRIBUTING.md](CONTRIBUTING.md) for the full release steps.
 
 ### Getting the newest code later
 
@@ -316,8 +353,7 @@ You can skip building and run FMOS straight from the source:
 go run ./cmd/fmos
 ```
 
-To build every file at once for a release, including the Windows files from a
-Mac, see [CONTRIBUTING.md](CONTRIBUTING.md).
+To make a release, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Contributing
 

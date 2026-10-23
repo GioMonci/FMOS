@@ -28,7 +28,8 @@ been verified on a real machine or VM. Follow the rules in `AGENTS.md`.
 - **System info:** on Windows, one read-only PowerShell query of built-in
   Windows data, because fastfetch is usually not installed there. On macOS and
   Linux, `fastfetch --format json`, parsed into FMOS's own panel.
-- **Distribution:** a single portable `fmos.exe` on GitHub Releases. No installer.
+- **Distribution:** a single portable program per computer on GitHub Releases
+  (`fmos-x64.exe`, `fmos-arm64.exe`, and `fmos-macos` for my own Mac). No installer.
 - **Updates:** FMOS checks GitHub for a newer release and updates itself only
   after the user confirms.
 - **Website:** one plain HTML/CSS page on GitHub Pages, served from `docs/`.
@@ -66,8 +67,7 @@ been verified on a real machine or VM. Follow the rules in `AGENTS.md`.
 
 ### 1. [x] Replace the C++ foundation with Go
 
-Verified on macOS. The Windows build cross-compiles, but it has not been run on
-Windows yet.
+Verified on macOS and Windows.
 
 - Remove `src/main.cpp` and `CMakeLists.txt`.
 - Add `go.mod` and `cmd/fmos/main.go`.
@@ -79,8 +79,7 @@ Windows yet.
 
 ### 2. [x] Build the TUI skeleton
 
-Verified on macOS. Double-clicking `fmos.exe` and the older Windows console
-window have not been tested on Windows yet.
+Verified on macOS and Windows, including double-clicking `fmos-x64.exe`.
 
 - Bubble Tea app with the system panel on the left and the menu on the right.
 - Menu: OS Repair, Tools, Network, Logs, Quit.
@@ -94,8 +93,8 @@ window have not been tested on Windows yet.
 
 ### 3. [x] Add the system info panel
 
-Verified on macOS, both with and without fastfetch. The Windows query compiles,
-but it has not been run on Windows yet.
+Verified on macOS, both with and without fastfetch, and on Windows with the
+built-in Windows query.
 
 - Show OS and version, CPU, GPU, RAM used/total, disk space, uptime, current
   user, and whether FMOS is running as admin.
@@ -109,8 +108,9 @@ but it has not been run on Windows yet.
 
 Verified on macOS: logs land in `~/Library/Logs/FMOS`, the warning appears when
 the folder cannot be created, two sessions in the same second get separate
-files, quitting early is noted, and "Open logs folder" opens Finder. Not yet
-run on Windows.
+files, quitting early is noted, and "Open logs folder" opens Finder. Verified
+on Windows: logs land in `%LOCALAPPDATA%\FMOS\logs`, and "Open logs folder"
+opens File Explorer.
 
 - Create a timestamped session log (`fmos-YYYY-MM-DD_HH-MM-SS.txt`) in the
   user's app-data folder: `%LOCALAPPDATA%\FMOS\logs` on Windows,
@@ -128,8 +128,7 @@ run on Windows.
 ### 5. [x] Add the command runner
 
 Verified on macOS with Network > Show network details (`ifconfig`), plus test
-runs of every outcome. The Windows version (`ipconfig /all`) compiles, but it
-has not been run on Windows yet.
+runs of every outcome. Verified on Windows with `ipconfig /all`.
 
 - Run known programs by full path with explicit arguments through `os/exec`
   (`internal/runner`). Never build shell command strings or search PATH.
@@ -220,11 +219,11 @@ SmartScreen warnings, and updates with friends before any repair features exist.
 
 ### 7. [x] Add update checking and self-update
 
-Verified on macOS. The check against the real GitHub works: with no release
-yet, it says "This is the newest version". Download, checksum, swap, and
-cleanup were tested against a stand-in GitHub server, including a tampered
-download, which was rejected. Still to test: a real update from a real release
-(step 11), and the swap on Windows.
+Verified on macOS and Windows. The check against the real GitHub works: with
+no release yet, it says "This is the newest version". Download, checksum,
+swap, and cleanup were tested on macOS against a stand-in GitHub server,
+including a tampered download, which was rejected. Still to test: a real
+update from a real release, including the swap on Windows (step 11).
 
 - Code: `internal/update` (check, download, verify, swap, clean up) and the
   Updates section in the menu (`internal/tui/updates.go`).
@@ -254,21 +253,32 @@ download, which was rejected. Still to test: a real update from a real release
 - Log every check and every update. Use only the standard library (`net/http`,
   `crypto/sha256`).
 
-### 8. [ ] Set up the release process (manual for now)
+### 8. [ ] Set up the release process and publish v0.1.0
 
-- Tag versions `v0.1.0`, `v0.2.0`, and so on. Build with
-  `-ldflags "-X main.version=0.1.0"` so FMOS knows its own version.
-- Attach `fmos-x64.exe`, `fmos-arm64.exe`, and `SHA256SUMS.txt` to each
-  GitHub Release. The file names and build commands are in `CONTRIBUTING.md`
-  (Building every file for a release).
-- `SHA256SUMS.txt` must have one line per file in the form
-  `<sha256 hash>  <file name>`, which is what `shasum -a 256 fmos-*.exe`
-  (macOS) or `sha256sum fmos-*.exe` (Linux) prints. The update checker refuses
-  any download without a matching line.
-- Create releases on the GitHub website or with `gh release create`.
-- Write short, plain-English release notes, because FMOS shows them on the update screen.
-- Check that releases contain no logs, private files, or local settings.
-- Automate releases only when doing them by hand becomes a chore.
+**Release process: done and tested.** Still to do: publish v0.1.0.
+
+- `scripts/release.ps1` is the Windows version, with the same steps and checks.
+  It has not been run yet: try it on Windows with a test version such as
+  `0.0.1`, then delete `build\release\v0.0.1`.
+- `scripts/release.sh 0.1.0` builds `fmos-x64.exe`, `fmos-arm64.exe`, and
+  `fmos-macos` into `build/release/v0.1.0/` with `-trimpath` and
+  `-ldflags "-X main.version=0.1.0"`, then writes `SHA256SUMS.txt` and a
+  `notes.md` template. It refuses uncommitted changes, existing tags, and
+  existing release folders.
+- The script checks its own work: no folder paths from this computer inside the
+  files (it stops if `-trimpath` is missing), the fingerprints match, and the
+  Mac build reports the right version. Tested in a throwaway copy of the repo,
+  including a deliberately broken script without `-trimpath`, which it caught.
+  The updater installed the real `fmos-macos` from those files and reported
+  "FMOS 0.1.0".
+- Development builds go in `build/dev/`. Release builds keep the same file names,
+  because the updater and download links need exact names. The folder, the
+  `--version` output, and the fingerprints tell them apart.
+- The full steps are in `CONTRIBUTING.md` (Making a release): commit and push,
+  run the script, write notes, publish with `gh release create` or on
+  github.com, then check that a development build's Updates screen offers it.
+- Publish v0.1.0 as a full release (not a pre-release), with the three programs
+  and `SHA256SUMS.txt` (not `notes.md`).
 
 ### 9. [ ] Write the install guide in the README
 
@@ -285,6 +295,8 @@ download, which was rejected. Still to test: a real update from a real release
   - How updates work.
   - How to send logs for help: Logs > Open logs folder, then send the newest file.
   - How to remove FMOS (delete the folder).
+  - For the Mac file: `chmod +x` and `xattr -c` before the first run (the
+    README's Getting FMOS section already has these).
 - Add screenshots once the TUI exists.
 
 ### 10. [ ] Build the GitHub Pages website
@@ -444,8 +456,8 @@ The goal is to help answer "why am I lagging?"
 
 ### 27. [ ] More platforms and package managers
 
-- Add `fmos-macos` and `fmos-linux` to releases once the macOS and Ubuntu
-  features exist. Build with `CGO_ENABLED=0`.
+- `fmos-macos` is already in releases (from step 8). Add `fmos-linux` once the
+  Ubuntu features exist, in both release scripts and the update checker.
 - Publish to winget so people can run `winget install` and `winget upgrade`.
   This needs a manifest pull request to `microsoft/winget-pkgs` for each release.
 - Add a Homebrew tap for macOS.

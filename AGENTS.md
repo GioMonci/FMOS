@@ -208,7 +208,8 @@ Risky actions should have:
 
 ## Distribution and Updates
 
-* FMOS ships as a single portable `fmos.exe` on GitHub Releases. There is no installer.
+* FMOS ships as a single portable program per computer on GitHub Releases
+  (`fmos-x64.exe`, `fmos-arm64.exe`, `fmos-macos`). There is no installer.
 * Users can run FMOS from any folder they own, including Downloads. Logs do not
   depend on where the exe is (see Logging Requirements).
 * FMOS may check GitHub for a newer release, but it updates only after the user
@@ -336,6 +337,7 @@ Current project structure:
 ├── CONTRIBUTING.md       Contributor instructions
 ├── AGENTS.md             Instructions for AI coding agents
 ├── CLAUDE.md             Points Claude Code to this file
+├── scripts/              release.sh (macOS/Linux) and release.ps1 (Windows): build a release
 └── todo.md               Roadmap
 ```
 
@@ -375,9 +377,22 @@ Run without building a binary:
 go run ./cmd/fmos
 ```
 
-Build output goes in `build/`, named for the computer it runs on. Use exactly
-these names everywhere: build commands, release assets, the website, and the
-update checker.
+Build output goes in the ignored `build/` folder, in two separate places:
+
+* `build/dev/`: development builds from the commands below (version `0.1.0-dev`).
+  Never upload these.
+* `build/release/vX.Y.Z/`: release builds, made only by `scripts/release.sh X.Y.Z`
+  (macOS/Linux) or `scripts/release.ps1 X.Y.Z` (Windows). The scripts build from
+  committed code with `-trimpath` and the release version, write
+  `SHA256SUMS.txt`, and check their own work. Only files from here go to
+  GitHub Releases. The two scripts must stay in step: when you change one,
+  change the other the same way. Keep `release.ps1` plain ASCII, because
+  Windows PowerShell 5.1 misreads other characters in files without a BOM.
+
+Files are named for the computer they run on, and the names are the same in
+both folders. Use exactly these names everywhere: build commands, release
+assets, the website, and the update checker. Never add a version or hash to
+the file names, because the updater and download links look for these exact names.
 
 | File | Runs on | `GOOS`/`GOARCH` |
 | --- | --- | --- |
@@ -386,17 +401,18 @@ update checker.
 | `fmos-macos` | macOS on Apple Silicon | `darwin/arm64` |
 | `fmos-linux` | Linux on Intel or AMD | `linux/amd64` |
 
-Build all four from macOS or Linux:
+Development builds of all four from macOS or Linux:
 
 ```bash
-CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o build/fmos-x64.exe ./cmd/fmos
-CGO_ENABLED=0 GOOS=windows GOARCH=arm64 go build -o build/fmos-arm64.exe ./cmd/fmos
-CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -o build/fmos-macos ./cmd/fmos
-CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o build/fmos-linux ./cmd/fmos
+CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o build/dev/fmos-x64.exe ./cmd/fmos
+CGO_ENABLED=0 GOOS=windows GOARCH=arm64 go build -o build/dev/fmos-arm64.exe ./cmd/fmos
+CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -o build/dev/fmos-macos ./cmd/fmos
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o build/dev/fmos-linux ./cmd/fmos
 ```
 
-`README.md` shows each platform building its own files, which is what users
-need. `CONTRIBUTING.md` has the full set for releases, including PowerShell.
+Releases currently include `fmos-x64.exe`, `fmos-arm64.exe`, and `fmos-macos`.
+`README.md` shows each platform building its own development files.
+`CONTRIBUTING.md` has the PowerShell commands and the full release steps.
 
 Before committing, run:
 
