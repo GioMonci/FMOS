@@ -315,6 +315,10 @@ and the SmartScreen steps. Then add screenshots.
 
 ### 10. [ ] Build the GitHub Pages website
 
+**Built** in `docs/`. Checked in Chrome on macOS at desktop and phone widths, in
+light and dark mode. Before checking this off: turn on Pages, open the live
+site on a phone and on the Windows PC, and download FMOS with its button.
+
 - Plain `docs/index.html` and `docs/style.css`. No frameworks, no build step.
 - One page: what FMOS is, a download button, install steps, updating, what
   FMOS does and does not do, and a link to the GitHub repo.

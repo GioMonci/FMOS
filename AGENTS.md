@@ -37,7 +37,8 @@ is read-only. A review screen (`internal/tui/review.go`) guards system-changing
 and admin-only actions, and "Restart FMOS as Administrator" exists for Windows.
 OS Repair and Tools are still "Coming soon" placeholders. FMOS does not run
 repair commands or change the system yet. The first release, v0.1.1, is
-published on GitHub. The install guide (step 9 in `todo.md`) is next.
+published on GitHub. The install guide is in the README, and the website is in
+`docs/` (steps 9 and 10 in `todo.md`). Both still need checking on Windows.
 
 ### Planned interface
 
@@ -331,6 +332,7 @@ Current project structure:
 │   ├── update/           Checks GitHub for a newer release, installs it when asked
 │   ├── logging/          Session logs in the user's app-data folder
 │   └── platform/         Admin/root detection, opening folders, Windows folder
+├── docs/                 GitHub Pages website (index.html, style.css)
 ├── go.mod                Go module definition
 ├── go.sum                Dependency checksums
 ├── README.md             User instructions

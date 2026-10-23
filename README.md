@@ -44,7 +44,8 @@ Defender scans, and network speed checks.
 
 FMOS is a single program file. There is no installer: you download the file
 and double-click it. These steps are for Windows. For a Mac, see
-[On a Mac](#on-a-mac).
+[On a Mac](#on-a-mac). The same steps are on the
+[FMOS website](https://giomonci.github.io/FMOS/).
 
 ### 1. Download the right file
 
