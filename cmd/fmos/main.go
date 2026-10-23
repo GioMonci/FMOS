@@ -12,7 +12,7 @@ import (
 
 // version is the FMOS version. Release builds can set it with
 // -ldflags "-X main.version=<version>".
-var version = "0.1.0-dev"
+var version = "0.1.1-dev"
 
 func main() {
 	os.Exit(run(os.Args[1:]))
