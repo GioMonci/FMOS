@@ -42,26 +42,144 @@ Defender scans, and network speed checks.
 
 ## Getting FMOS
 
-FMOS has not been released yet. When it is, you will download a single file
-from the [Releases page](https://github.com/GioMonci/FMOS/releases). There is
-nothing to install. Until then, you can [build it yourself](#building-fmos-yourself).
+FMOS is a single program file. There is no installer: you download the file
+and double-click it. These steps are for Windows. For a Mac, see
+[On a Mac](#on-a-mac).
 
-Pick the file for your computer:
+### 1. Download the right file
 
-| File | For |
+Most computers need the first file. Click its name to download it.
+
+| Download | For |
 | --- | --- |
-| `fmos-x64.exe` | Windows on Intel or AMD (almost all desktops and laptops) |
-| `fmos-arm64.exe` | Windows on ARM (for example, Snapdragon laptops) |
-| `fmos-macos` | macOS on Apple Silicon (M1 and newer) |
+| [fmos-x64.exe](https://github.com/GioMonci/FMOS/releases/latest/download/fmos-x64.exe) | Windows on Intel or AMD (almost all desktops and laptops) |
+| [fmos-arm64.exe](https://github.com/GioMonci/FMOS/releases/latest/download/fmos-arm64.exe) | Windows on ARM (for example, Snapdragon laptops) |
+| [fmos-macos](https://github.com/GioMonci/FMOS/releases/latest/download/fmos-macos) | macOS on Apple Silicon (M1 and newer) |
 
 Not sure which Windows file you need? Open **Settings > System > About** and
 look at **System type**. It says either "x64-based processor" or
 "ARM-based processor".
 
-Each release also has a `SHA256SUMS.txt` file with each program's fingerprint.
-FMOS uses it to check its own updates, so you can ignore it.
+These links always give you the newest version. Every version is also listed
+on the [Releases page](https://github.com/GioMonci/FMOS/releases). Each release
+there also has a `SHA256SUMS.txt` file, which FMOS uses to check its own
+updates. You can ignore it.
 
-**On a Mac,** a downloaded program is blocked until you allow it. In Terminal:
+**Only download FMOS from these links.** The warnings in the next steps are
+fine to get past for this file, because you know where it came from. Do not do
+that for a copy of FMOS from anywhere else.
+
+### 2. Keep the file if your browser warns you
+
+Your browser may say that `fmos-x64.exe` "isn't commonly downloaded" and hold
+the file back. This happens because FMOS is new and few people have downloaded
+it. It does not mean anything harmful was found.
+
+- **Microsoft Edge:** in the downloads list, point at the file, click the
+  **...** button, and choose **Keep**. In the next window, click **Show more**,
+  then **Keep anyway**.
+- **Other browsers:** open the downloads list and look for a **Keep** button.
+
+### 3. Choose where to keep it
+
+Keep FMOS in one of your own folders. Leaving it in **Downloads** is fine, or
+you can move it to your **Desktop**.
+
+Do not put it in `C:\Program Files`. FMOS updates itself by replacing its own
+file, and only Administrator programs can change files there, so FMOS could
+not update itself.
+
+To open FMOS from the Desktop while the file stays in Downloads, right-click
+the file and choose **Show more options > Send to > Desktop (create
+shortcut)**. On Windows 10, choose **Send to > Desktop (create shortcut)**.
+
+### 4. Open FMOS
+
+Double-click the file. The first time, Windows may show a blue window that
+says **Windows protected your PC**. To open FMOS anyway:
+
+1. Click **More info**.
+2. Check that it says **App: fmos-x64.exe** (or `fmos-arm64.exe`).
+3. Click **Run anyway**.
+
+**Why Windows warns you:** Microsoft Defender SmartScreen warns about programs
+that it has not seen many people use and that are not code-signed. Code
+signing is a paid certificate that tells Windows who made a program. FMOS does
+not have one yet, so Windows calls it an "Unknown publisher". If the warning
+appears again, do the same steps.
+
+FMOS opens in a text window and works with the keyboard. See
+[Using FMOS](#using-fmos). If the text looks squashed, maximize the window.
+
+**If Windows says Smart App Control blocked FMOS,** there is no Run anyway
+button. Some newer Windows 11 computers block every program that is not
+code-signed, so FMOS cannot run there yet. Do not turn off Smart App Control
+just for FMOS. Tell the person who shared FMOS with you instead.
+
+### 5. If FMOS asks for Administrator permissions
+
+Some repairs need Administrator permissions. None of FMOS's current features
+do, so you will not see this yet.
+
+When a repair needs them, its review screen explains why and offers to restart
+FMOS as Administrator, but only if you press **Y**. Windows then dims the
+screen and asks:
+
+```text
+Do you want to allow this app from an unknown publisher to make changes to your device?
+
+fmos-x64.exe
+Publisher: Unknown
+```
+
+- **Yes:** FMOS closes and opens again as Administrator, on the same review
+  screen. Nothing runs until you press Y there.
+- **No:** FMOS keeps running without Administrator permissions and tells you
+  which repair it could not run.
+- If your Windows account is not an administrator, Windows asks for an
+  administrator's password instead. If you do not know it, click **No**.
+
+It says "Unknown publisher" for the same reason as the warning in step 4:
+FMOS is not code-signed yet. FMOS never asks for Administrator permissions on
+its own. It only asks when you press Y on a review screen.
+
+### Updating FMOS
+
+You never need to download FMOS again. When a new version comes out, the top
+line of FMOS says **Update available**. Choose **Updates**, read what's new,
+and press Enter on **Update to ...**. When it is done, quit FMOS (press **q**)
+and open it again. See [Updates](#updates) for how it works.
+
+After an update, you may see a file named `fmos-x64.exe.old` next to FMOS.
+That is the previous version. FMOS deletes it the next time it opens.
+
+### Sending your logs for help
+
+If something goes wrong, or someone is helping you from far away, send them
+your FMOS log:
+
+1. In FMOS, choose **Logs**, then press Enter on **Open logs folder**.
+2. Quit FMOS (press **q**), so the log is complete.
+3. Send the newest file. Its name has the date and time, for example
+   `fmos-2026-10-22_13-45-10.txt`.
+
+Logs include details such as your Windows user name, so only send them to
+people you trust. FMOS never sends logs anywhere by itself.
+
+### Removing FMOS
+
+1. Delete the FMOS file, and `fmos-x64.exe.old` if there is one. Delete your
+   Desktop shortcut too, if you made one.
+2. To delete the logs as well, press **Windows key + R**, type
+   `%LOCALAPPDATA%`, press Enter, and delete the **FMOS** folder there.
+
+That is everything. FMOS adds nothing else to your computer: no Start menu
+entries, no settings, and nothing that runs in the background.
+
+### On a Mac
+
+Download `fmos-macos` from the table in step 1. A downloaded program is
+blocked until you allow it. In Terminal:
 
 ```bash
 cd ~/Downloads
@@ -69,6 +187,9 @@ chmod +x fmos-macos      # allow it to run as a program
 xattr -c fmos-macos      # remove the "downloaded from the internet" block
 ./fmos-macos
 ```
+
+Updates work the same way as on Windows. To remove FMOS, delete `fmos-macos`,
+and delete the `~/Library/Logs/FMOS` folder for the logs.
 
 ## Using FMOS
 

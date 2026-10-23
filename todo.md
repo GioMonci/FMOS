@@ -54,7 +54,9 @@ been verified on a real machine or VM. Follow the rules in `AGENTS.md`.
 
 - [ ] Code signing: unsigned downloads trigger a Windows SmartScreen warning.
   That's acceptable for friends at first, because the install guide explains
-  it. Decide later whether paid signing is worth it.
+  it. Decide later whether paid signing is worth it. Windows 11 computers
+  with Smart App Control turned on block unsigned programs completely, with no
+  "Run anyway" button, so FMOS cannot run on them until it is signed.
 - [ ] Release signing (deferred for now): sign each release with a private key
   kept off GitHub, and have FMOS refuse updates without a valid signature
   (`crypto/ed25519`, no new dependency). Without it, someone who got into the
@@ -288,6 +290,11 @@ v0.1.1 release works on macOS and Windows, including the swap and cleanup.
   and `SHA256SUMS.txt` (not `notes.md`).
 
 ### 9. [ ] Write the install guide in the README
+
+**Written** in the README's Getting FMOS section. The three download links
+work (checked against the v0.1.1 release). Before checking this off, follow
+the guide on Windows from a fresh download, to confirm the Edge "Keep" steps
+and the SmartScreen steps. Then add screenshots.
 
 - Write it for people who are not technical.
 - Cover these points:
