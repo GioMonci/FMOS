@@ -45,6 +45,11 @@
   box-sizing: border-box;
 }
 
+/* Keeps hidden download choices hidden, even when a rule below sets display. */
+[hidden] {
+  display: none !important;
+}
+
 html {
   scroll-behavior: smooth;
 }
@@ -191,10 +196,27 @@ kbd {
   text-decoration: underline;
 }
 
+.topbar nav a[aria-current="page"] {
+  color: var(--text);
+  font-weight: 600;
+}
+
 /* Download */
 
 .download {
-  margin: 28px 0 36px;
+  margin: 28px 0 12px;
+}
+
+.download + .small {
+  margin-bottom: 36px;
+}
+
+/* Shown instead of a download button on phones and unsupported computers. */
+.callout {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 20px;
 }
 
 .button {
@@ -283,10 +305,6 @@ kbd {
   color: var(--muted);
 }
 
-.coming {
-  color: var(--muted);
-}
-
 /* Safety list */
 
 .checklist {
@@ -366,6 +384,69 @@ kbd {
 
 .dialog p:last-child {
   margin-bottom: 0;
+}
+
+/* Help page */
+
+section.page-title {
+  border-top: 0;
+  padding-top: 48px;
+}
+
+.page-title h1 {
+  font-size: clamp(2rem, 6vw, 2.75rem);
+}
+
+.toc {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 8px 24px;
+  margin-top: 28px;
+}
+
+.toc h2 {
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  margin-bottom: 0.5em;
+}
+
+.toc ul {
+  list-style: none;
+  padding: 0;
+}
+
+.qa {
+  margin-bottom: 36px;
+  scroll-margin-top: 16px;
+}
+
+.qa:last-child {
+  margin-bottom: 0;
+}
+
+.qa h3 {
+  margin-top: 0;
+}
+
+.commands {
+  font-family: var(--mono);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin: 0 0 1em;
+  overflow-x: auto;
+}
+
+.commands code {
+  background: none;
+  padding: 0;
+  font-size: inherit;
+  overflow-wrap: normal;
 }
 
 /* Footer */

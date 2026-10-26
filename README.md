@@ -181,7 +181,9 @@ entries, no settings, and nothing that runs in the background.
 ### On a Mac
 
 Download `fmos-macos` from the table in step 1. A downloaded program is
-blocked until you allow it. In Terminal:
+blocked until you allow it. If macOS says it could not verify that
+"fmos-macos" is free of malware, click **Done**, not Move to Trash. Then, in
+Terminal:
 
 ```bash
 cd ~/Downloads

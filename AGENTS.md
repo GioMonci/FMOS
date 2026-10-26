@@ -37,8 +37,8 @@ is read-only. A review screen (`internal/tui/review.go`) guards system-changing
 and admin-only actions, and "Restart FMOS as Administrator" exists for Windows.
 OS Repair and Tools are still "Coming soon" placeholders. FMOS does not run
 repair commands or change the system yet. The first release, v0.1.1, is
-published on GitHub. The install guide is in the README, and the website is in
-`docs/` (steps 9 and 10 in `todo.md`). Both still need checking on Windows.
+published on GitHub. The install guide is in the README, and the website is
+live from `docs/` (steps 9 and 10 in `todo.md`).
 
 ### Planned interface
 
@@ -332,7 +332,7 @@ Current project structure:
 │   ├── update/           Checks GitHub for a newer release, installs it when asked
 │   ├── logging/          Session logs in the user's app-data folder
 │   └── platform/         Admin/root detection, opening folders, Windows folder
-├── docs/                 GitHub Pages website (index.html, style.css)
+├── docs/                 GitHub Pages website (index.html, help.html, style.css)
 ├── go.mod                Go module definition
 ├── go.sum                Dependency checksums
 ├── README.md             User instructions
@@ -355,7 +355,7 @@ Planned Go structure:
 │   ├── runner/           Runs external commands, streams and captures output
 │   ├── platform/         Admin/root detection and other small OS helpers
 │   └── logging/          Session logs in the user's app-data folder
-├── docs/                 GitHub Pages website (index.html, style.css)
+├── docs/                 GitHub Pages website (index.html, help.html, style.css)
 ├── go.mod
 └── go.sum
 ```
@@ -643,7 +643,11 @@ Documentation should be beginner-friendly.
 
 Keep project documentation in the root `README.md`. The `docs/` folder holds
 only the GitHub Pages website: plain HTML and CSS, no frameworks, and no build
-step. When install or update steps change, update both the README and the website.
+step. The only JavaScript is the small script in `index.html` that picks the
+download for the visitor's computer. Without it, the page still works and
+offers the Windows download. When install or update steps change, update both
+the README and the website (`index.html` for the short steps, `help.html` for
+the rest).
 
 When adding a feature, update documentation with:
 

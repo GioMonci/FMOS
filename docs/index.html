@@ -16,16 +16,16 @@
 <body>
   <header class="topbar">
     <div class="wrap topbar-inner">
-      <a class="brand" href="#top">FMOS</a>
-      <nav aria-label="Page sections">
-        <a href="#install">Install</a>
-        <a href="#help">Get help</a>
+      <a class="brand" href="./">FMOS</a>
+      <nav aria-label="Site">
+        <a href="./" aria-current="page">Download</a>
+        <a href="help.html">Help</a>
         <a href="https://github.com/GioMonci/FMOS">GitHub</a>
       </nav>
     </div>
   </header>
 
-  <main id="top">
+  <main>
     <section class="hero">
       <div class="wrap">
         <h1>Fix My OS</h1>
@@ -34,19 +34,46 @@
           simple menu, and explains everything in plain English.
         </p>
 
-        <div class="download">
+        <!-- Only one of these is shown. The script at the bottom of the page
+             picks the one for the visitor's computer. Without the script,
+             everyone sees the Windows download. -->
+        <div class="download" data-system="windows">
           <a class="button" href="https://github.com/GioMonci/FMOS/releases/latest/download/fmos-x64.exe">Download for Windows</a>
           <p class="small">
             Free. One file, nothing to install. For Windows 10 and 11 on Intel
             or AMD, which is almost every PC.
           </p>
+        </div>
+        <div class="download" data-system="mac" hidden>
+          <a class="button" href="https://github.com/GioMonci/FMOS/releases/latest/download/fmos-macos">Download for Mac</a>
           <p class="small">
-            Other downloads:
-            <a href="https://github.com/GioMonci/FMOS/releases/latest/download/fmos-arm64.exe">Windows on ARM</a> ·
-            <a href="https://github.com/GioMonci/FMOS/releases/latest/download/fmos-macos">Mac (Apple Silicon)</a> ·
-            <a href="https://github.com/GioMonci/FMOS/releases">All versions</a>
+            For Macs with Apple Silicon (M1 and newer). macOS blocks it until
+            you run two Terminal commands: see
+            <a href="help.html#mac">using FMOS on a Mac</a>.
           </p>
         </div>
+        <div class="download" data-system="mobile" hidden>
+          <p class="callout">
+            <b>FMOS runs on computers, not phones or tablets.</b> To download
+            it, open this page on your Windows PC: <b>giomonci.github.io/FMOS</b>
+          </p>
+        </div>
+        <div class="download" data-system="other" hidden>
+          <p class="callout">
+            <b>There is no download for this computer yet.</b> FMOS is made for
+            Windows. You can still
+            <a href="https://github.com/GioMonci/FMOS#building-fmos-yourself">build it yourself</a>
+            from its source code.
+          </p>
+        </div>
+
+        <p class="small">
+          All downloads:
+          <a href="https://github.com/GioMonci/FMOS/releases/latest/download/fmos-x64.exe">Windows</a> ·
+          <a href="https://github.com/GioMonci/FMOS/releases/latest/download/fmos-arm64.exe">Windows on ARM</a> ·
+          <a href="https://github.com/GioMonci/FMOS/releases/latest/download/fmos-macos">Mac (Apple Silicon)</a> ·
+          <a href="https://github.com/GioMonci/FMOS/releases">All versions</a>
+        </p>
 
         <figure class="screen">
           <pre role="img" aria-label="The FMOS window: system details on the left, and a menu on the right with OS Repair, Tools, Network, Logs, Updates, and Quit."><span class="t-title">FMOS (Fix My OS)</span>
@@ -74,9 +101,8 @@
         <h2>What FMOS can do</h2>
         <p>
           Lots of useful Windows tools are hidden in settings pages or need
-          commands nobody remembers. FMOS gathers them in one place. It runs
-          the tools Windows already has, shows what they found, and keeps a log
-          you can send to someone helping you.
+          commands nobody remembers. FMOS gathers them in one place, runs them
+          for you, and explains what they found.
         </p>
         <div class="cards">
           <div class="card">
@@ -96,7 +122,7 @@
             <p>Checks for new versions and updates itself, but only when you choose to.</p>
           </div>
         </div>
-        <p class="coming">
+        <p class="small">
           <b>Coming next:</b> system file and disk repairs (SFC, DISM, CHKDSK),
           installing and updating apps, driver and Microsoft Store updates,
           virus scans with Microsoft Defender, and network speed checks.
@@ -104,246 +130,45 @@
       </div>
     </section>
 
-    <section id="safety">
-      <div class="wrap">
-        <h2>Safe by design</h2>
-        <ul class="checklist">
-          <li>
-            <b>It explains before it changes anything.</b> Each repair shows a
-            review screen first: what it does, the exact command, and whether
-            it needs Administrator permissions, internet, or a restart. Nothing
-            happens until you press <kbd>Y</kbd>.
-          </li>
-          <li>
-            <b>It uses Windows' own tools,</b> such as SFC, DISM, and Microsoft
-            Defender, instead of reinventing them.
-          </li>
-          <li>
-            <b>No surprise Administrator prompts.</b> FMOS only asks for
-            Administrator permissions when you choose to.
-          </li>
-          <li>
-            <b>No tracking.</b> FMOS only goes online to check for updates, and
-            sends nothing about your computer.
-          </li>
-          <li>
-            <b>Your logs stay on your computer.</b> Sharing one is always your choice.
-          </li>
-          <li>
-            <b>Free and open source.</b> Anyone can read the code on
-            <a href="https://github.com/GioMonci/FMOS">GitHub</a>.
-          </li>
-        </ul>
-
-        <h3>What FMOS does not do</h3>
-        <ul>
-          <li>It does not change your computer yet. Repairs are coming, each with its own review screen.</li>
-          <li>It cannot fix every problem, and it does not say something is fixed unless the tool it ran confirms it.</li>
-          <li>It does not run in the background, start with Windows, or install anything else.</li>
-          <li>It is not made by Microsoft.</li>
-        </ul>
-      </div>
-    </section>
-
     <section id="install">
       <div class="wrap">
-        <h2>Installing FMOS on Windows</h2>
-        <p>
-          FMOS is a single program file. There is no installer: you download
-          the file and double-click it. Windows shows a couple of warnings the
-          first time, because FMOS is new. These steps walk you through them.
-        </p>
+        <h2>How to install</h2>
+        <p>There is no installer. FMOS is one file that you download and open.</p>
 
         <ol class="steps">
           <li>
-            <h3>Download the right file</h3>
+            <h3>Download FMOS</h3>
             <p>
-              Most PCs need the <a href="https://github.com/GioMonci/FMOS/releases/latest/download/fmos-x64.exe">Download for Windows</a>
-              button. Not sure? Open <b>Settings &gt; System &gt; About</b> and
-              look at <b>System type</b>. "x64-based processor" means the main
-              button. "ARM-based processor" means the
-              <a href="https://github.com/GioMonci/FMOS/releases/latest/download/fmos-arm64.exe">Windows on ARM</a> file.
-            </p>
-            <p>
-              <b>Only download FMOS from this page or its GitHub page.</b> The
-              warnings below are fine to get past for this file, because you
-              know where it came from. Do not do that for a copy from anywhere else.
+              Click <b>Download for Windows</b> above. Keep the file in
+              <b>Downloads</b> or on your <b>Desktop</b>, not in Program Files,
+              so FMOS can update itself.
             </p>
           </li>
-
           <li>
-            <h3>Keep the file if your browser warns you</h3>
+            <h3>Keep the file</h3>
             <p>
-              Your browser may say that <code>fmos-x64.exe</code> "isn't
-              commonly downloaded" and hold the file back. That is because
-              FMOS is new and few people have downloaded it. It does not mean
-              anything harmful was found.
-            </p>
-            <ul>
-              <li>
-                <b>Microsoft Edge:</b> in the downloads list, point at the file,
-                click the <b>...</b> button, and choose <b>Keep</b>. In the next
-                window, click <b>Show more</b>, then <b>Keep anyway</b>.
-              </li>
-              <li><b>Other browsers:</b> open the downloads list and look for a <b>Keep</b> button.</li>
-            </ul>
-          </li>
-
-          <li>
-            <h3>Choose where to keep it</h3>
-            <p>
-              Keep FMOS in one of your own folders. Leaving it in
-              <b>Downloads</b> is fine, or you can move it to your <b>Desktop</b>.
-            </p>
-            <p>
-              Do not put it in <code>C:\Program Files</code>. FMOS updates itself
-              by replacing its own file, and only Administrator programs can
-              change files there.
-            </p>
-            <p>
-              To open FMOS from the Desktop while the file stays in Downloads,
-              right-click the file and choose <b>Show more options &gt; Send to
-              &gt; Desktop (create shortcut)</b>. On Windows 10, choose
-              <b>Send to &gt; Desktop (create shortcut)</b>.
+              If your browser says the file "isn't commonly downloaded", choose
+              <b>Keep</b>. In Edge, click <b>...</b> next to the file,
+              then <b>Keep</b>, <b>Show more</b>, and <b>Keep anyway</b>.
             </p>
           </li>
-
           <li>
-            <h3>Open FMOS</h3>
+            <h3>Open it</h3>
             <p>
-              Double-click the file. The first time, Windows may show a blue
-              window that says <b>Windows protected your PC</b>. To open FMOS anyway:
-            </p>
-            <ol>
-              <li>Click <b>More info</b>.</li>
-              <li>Check that it says <b>App: fmos-x64.exe</b> (or <code>fmos-arm64.exe</code>).</li>
-              <li>Click <b>Run anyway</b>.</li>
-            </ol>
-            <p>
-              <b>Why Windows warns you:</b> Microsoft Defender SmartScreen warns
-              about programs that it has not seen many people use and that are
-              not code-signed. Code signing is a paid certificate that tells
-              Windows who made a program. FMOS does not have one yet, so Windows
-              calls it an "Unknown publisher". If the warning appears again, do
-              the same steps.
-            </p>
-            <p>
-              FMOS opens in a text window. Use the arrow keys to move,
-              <kbd>Enter</kbd> to choose, <kbd>Esc</kbd> to go back, and
-              <kbd>q</kbd> to quit. If the text looks squashed, maximize the window.
-            </p>
-            <div class="note">
-              <p>
-                <b>If Windows says Smart App Control blocked FMOS,</b> there is
-                no Run anyway button. Some newer Windows 11 computers block every
-                program that is not code-signed, so FMOS cannot run there yet.
-                Do not turn off Smart App Control just for FMOS. Tell the person
-                who shared FMOS with you instead.
-              </p>
-            </div>
-          </li>
-
-          <li>
-            <h3>If FMOS asks for Administrator permissions</h3>
-            <p>
-              Some repairs need Administrator permissions. None of FMOS's current
-              features do, so you will not see this yet.
-            </p>
-            <p>
-              When a repair needs them, its review screen explains why and offers
-              to restart FMOS as Administrator, but only if you press
-              <kbd>Y</kbd>. Windows then dims the screen and asks:
-            </p>
-            <div class="dialog">
-              <p>Do you want to allow this app from an unknown publisher to make changes to your device?</p>
-              <p><b>fmos-x64.exe</b><br>Publisher: Unknown</p>
-            </div>
-            <ul>
-              <li>
-                <b>Yes:</b> FMOS closes and opens again as Administrator, on the
-                same review screen. Nothing runs until you press <kbd>Y</kbd> there.
-              </li>
-              <li>
-                <b>No:</b> FMOS keeps running without Administrator permissions
-                and tells you which repair it could not run.
-              </li>
-              <li>
-                If your Windows account is not an administrator, Windows asks for
-                an administrator's password instead. If you do not know it, click <b>No</b>.
-              </li>
-            </ul>
-            <p>
-              It says "Unknown publisher" for the same reason as the warning in
-              step 4: FMOS is not code-signed yet.
+              Double-click the file. If Windows says <b>Windows protected your
+              PC</b>, click <b>More info</b>, then <b>Run anyway</b>.
             </p>
           </li>
         </ol>
-      </div>
-    </section>
 
-    <section id="updates">
-      <div class="wrap">
-        <h2>Updating FMOS</h2>
         <p>
-          You never need to download FMOS again. When a new version comes out,
-          the top line of FMOS says <b>Update available</b>. Choose
-          <b>Updates</b>, read what's new, and press <kbd>Enter</kbd> on
-          <b>Update to ...</b>. When it is done, quit FMOS and open it again.
+          FMOS opens in a text window. Use the arrow keys to move,
+          <kbd>Enter</kbd> to choose, <kbd>Esc</kbd> to go back, and
+          <kbd>q</kbd> to quit.
         </p>
         <p>
-          FMOS only downloads updates from its GitHub page, checks that the file
-          is intact before using it, and keeps your current version working if
-          anything goes wrong. After an update, you may see a file named
-          <code>fmos-x64.exe.old</code> next to FMOS. That is the previous
-          version, and FMOS deletes it the next time it opens.
-        </p>
-      </div>
-    </section>
-
-    <section id="help">
-      <div class="wrap">
-        <h2>Getting help: send your log</h2>
-        <p>
-          If something goes wrong, or someone is helping you from far away,
-          send them your FMOS log:
-        </p>
-        <ol>
-          <li>In FMOS, choose <b>Logs</b>, then press <kbd>Enter</kbd> on <b>Open logs folder</b>.</li>
-          <li>Quit FMOS (press <kbd>q</kbd>), so the log is complete.</li>
-          <li>
-            Send the newest file. Its name has the date and time, for example
-            <code>fmos-2026-10-22_13-45-10.txt</code>.
-          </li>
-        </ol>
-        <p>
-          Logs include details such as your Windows user name, so only send them
-          to people you trust. FMOS never sends logs anywhere by itself.
-        </p>
-      </div>
-    </section>
-
-    <section id="remove">
-      <div class="wrap">
-        <h2>Removing FMOS</h2>
-        <ol>
-          <li>
-            Delete the FMOS file, and <code>fmos-x64.exe.old</code> if there is
-            one. Delete your Desktop shortcut too, if you made one.
-          </li>
-          <li>
-            To delete the logs as well, press <kbd>Windows</kbd> + <kbd>R</kbd>,
-            type <code>%LOCALAPPDATA%</code>, press <kbd>Enter</kbd>, and delete
-            the <b>FMOS</b> folder there.
-          </li>
-        </ol>
-        <p>
-          That is everything. FMOS adds nothing else to your computer: no Start
-          menu entries, no settings, and nothing that runs in the background.
-        </p>
-        <p class="small">
-          On a Mac? Download <a href="https://github.com/GioMonci/FMOS/releases/latest/download/fmos-macos">fmos-macos</a>,
-          then follow the Terminal steps in the
-          <a href="https://github.com/GioMonci/FMOS#on-a-mac">README</a>.
+          Wondering why Windows warns you, or did something else happen? See
+          <a href="help.html">Help and questions</a>.
         </p>
       </div>
     </section>
@@ -359,5 +184,33 @@
       </p>
     </div>
   </footer>
+
+  <script>
+    // Shows the download for the visitor's computer by reading the browser's
+    // description of itself. Windows on ARM cannot be told apart from other
+    // Windows PCs this way, so it keeps its own link under "All downloads".
+    function detectSystem() {
+      const browser = navigator.userAgent;
+      if (/Android|iPhone|iPad|iPod/.test(browser)) {
+        return "mobile";
+      }
+      // iPads describe themselves as Macs, but have a touch screen.
+      if (/Macintosh/.test(browser) && navigator.maxTouchPoints > 1) {
+        return "mobile";
+      }
+      if (/Windows/.test(browser)) {
+        return "windows";
+      }
+      if (/Macintosh/.test(browser)) {
+        return "mac";
+      }
+      return "other";
+    }
+
+    const system = detectSystem();
+    for (const block of document.querySelectorAll(".download[data-system]")) {
+      block.hidden = block.dataset.system !== system;
+    }
+  </script>
 </body>
 </html>

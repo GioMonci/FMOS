@@ -32,7 +32,9 @@ been verified on a real machine or VM. Follow the rules in `AGENTS.md`.
   (`fmos-x64.exe`, `fmos-arm64.exe`, and `fmos-macos` for my own Mac). No installer.
 - **Updates:** FMOS checks GitHub for a newer release and updates itself only
   after the user confirms.
-- **Website:** one plain HTML/CSS page on GitHub Pages, served from `docs/`.
+- **Website:** plain HTML/CSS on GitHub Pages, served from `docs/`: a short
+  download page and a help page. One small script picks the download for the
+  visitor's computer.
 - **Logs:** the user's own app-data folder (`%LOCALAPPDATA%\FMOS\logs` on
   Windows), wherever the FMOS program is, even Downloads. It is always
   writable, not synced to OneDrive, and keeps every log in one place across
@@ -292,9 +294,10 @@ v0.1.1 release works on macOS and Windows, including the swap and cleanup.
 ### 9. [ ] Write the install guide in the README
 
 **Written** in the README's Getting FMOS section. The three download links
-work (checked against the v0.1.1 release). Before checking this off, follow
-the guide on Windows from a fresh download, to confirm the Edge "Keep" steps
-and the SmartScreen steps. Then add screenshots.
+work (checked against the v0.1.1 release). Checked on Windows with a fresh
+download from the website: SmartScreen's warning appears and "Run anyway"
+works. A copy from a flash drive shows no warning, because only downloaded
+files carry the "from the internet" mark. **Left:** screenshots.
 
 - Write it for people who are not technical.
 - Cover these points:
@@ -313,11 +316,16 @@ and the SmartScreen steps. Then add screenshots.
     README's Getting FMOS section already has these).
 - Add screenshots once the TUI exists.
 
-### 10. [ ] Build the GitHub Pages website
+### 10. [x] Build the GitHub Pages website
 
-**Built** in `docs/`. Checked in Chrome on macOS at desktop and phone widths, in
-light and dark mode. Before checking this off: turn on Pages, open the live
-site on a phone and on the Windows PC, and download FMOS with its button.
+**Live** at `https://giomonci.github.io/FMOS/`, served from `docs/`. Checked
+on a phone and on Windows, and FMOS downloaded with its button and ran.
+
+**Changed afterwards:** split into a short download page (`index.html`) and a
+help page with questions and answers (`help.html`). A small script in
+`index.html` shows the Windows or Mac download, or a message on phones and
+other computers. Checked in Chrome with Windows, Mac, Linux, and iPhone
+browser descriptions. Not checked yet on the live site.
 
 - Plain `docs/index.html` and `docs/style.css`. No frameworks, no build step.
 - One page: what FMOS is, a download button, install steps, updating, what
