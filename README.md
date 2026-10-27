@@ -15,8 +15,9 @@ log you can send to someone helping you.
 - **Free and open source** under the GPL-3.0 license.
 
 > **Early development.** FMOS can already show system details and network
-> details, save logs, and update itself. Repairs such as SFC and DISM are
-> coming next. See the [roadmap](todo.md).
+> details, check Windows for damage (SFC and DISM), save logs, and update itself.
+> Repairs such as DISM RestoreHealth and SFC are coming next. See the
+> [roadmap](todo.md).
 
 ## Contents
 
@@ -33,12 +34,13 @@ log you can send to someone helping you.
 | Feature | What it does | Windows | macOS | Linux |
 | --- | --- | --- | --- | --- |
 | [System panel](#system-panel) | Shows your OS, CPU, GPU, RAM, disk space, and more | Yes | Yes, with fastfetch | Yes, with fastfetch |
+| [Windows checks](#os-repair--windows-checks-sfc-and-dism) | Checks Windows' system files (SFC) and its own repair files (DISM) for damage, without changing anything | Yes | No | No |
 | [Show network details](#network--show-network-details) | Lists your network adapters and addresses | Yes | Yes | Yes |
 | [Logs](#logs) | Saves a log of every session, one key to open them | Yes | Yes | Yes |
 | [Updates](#updates) | Checks for a new version and installs it when you choose | Yes | Yes | Checks only |
 
-**Coming next:** system file and disk repairs (SFC, DISM, CHKDSK), installing
-and updating apps (winget), driver and Microsoft Store updates, Microsoft
+**Coming next:** system file repairs (DISM RestoreHealth, SFC), disk checks
+(CHKDSK), installing and updating apps (winget), driver and Microsoft Store updates, Microsoft
 Defender scans, and network speed checks.
 
 ## Getting FMOS
@@ -120,10 +122,10 @@ just for FMOS. Tell the person who shared FMOS with you instead.
 
 ### 5. If FMOS asks for Administrator permissions
 
-Some repairs need Administrator permissions. None of FMOS's current features
-do, so you will not see this yet.
+Some checks and repairs need Administrator permissions, such as the
+[Windows checks](#os-repair--windows-checks-sfc-and-dism) in OS Repair.
 
-When a repair needs them, its review screen explains why and offers to restart
+When one needs them, its review screen explains why and offers to restart
 FMOS as Administrator, but only if you press **Y**. Windows then dims the
 screen and asks:
 
@@ -137,7 +139,7 @@ Publisher: Unknown
 - **Yes:** FMOS closes and opens again as Administrator, on the same review
   screen. Nothing runs until you press Y there.
 - **No:** FMOS keeps running without Administrator permissions and tells you
-  which repair it could not run.
+  what it could not run.
 - If your Windows account is not an administrator, Windows asks for an
   administrator's password instead. If you do not know it, click **No**.
 
@@ -264,6 +266,50 @@ and whether FMOS is running as Administrator. It only reads information.
   sudo apt install fastfetch    # Ubuntu
   ```
 
+### OS Repair > Windows checks (SFC and DISM)
+
+These three checks look for damage in Windows' own files, using tools built
+into Windows. None of them repairs or changes anything.
+
+- **SFC** checks Windows' **system files**: the files your computer is running.
+- **DISM** checks the **component store**: Windows' own copy of its system
+  files, which it uses to fix and update itself. If that copy is damaged,
+  repairs and Windows updates can fail.
+
+| Check | What it does | How long |
+| --- | --- | --- |
+| **Check system files (SFC)** | Checks the system files for damage | Several minutes |
+| **Quick health check (DISM)** | Asks whether Windows has already recorded damage in the component store. It does not look for new damage | A few seconds |
+| **Full health scan (DISM)** | Scans the whole component store for damage | Several minutes |
+
+Use them when Windows acts strangely, apps or Windows features crash, Windows
+updates keep failing, or someone helping you asks for them. Start with
+**Check system files**. If it finds damage, run the DISM checks to see whether
+Windows can repair it.
+
+Choose **OS Repair**, then one of the checks. If FMOS is not running as
+Administrator, the review screen offers to restart it as Administrator first
+(see [step 5](#5-if-fmos-asks-for-administrator-permissions)). The progress
+appears live, and when it is done FMOS explains what was found:
+
+```text
+Finished in 4m 12s.
+SFC checked Windows' system files and found no damage.
+The full output is in this session's log (Logs > Open logs folder).
+```
+
+If a check finds damage, FMOS says so and what to try next. FMOS never starts
+a repair by itself. Repairs (DISM RestoreHealth and SFC /scannow) are coming in
+a later version.
+
+| | |
+| --- | --- |
+| **Runs** | `sfc.exe /verifyonly`, and `Dism.exe /Online /English /Cleanup-Image /CheckHealth` (quick) or `/ScanHealth` (full). `/English` keeps DISM's messages in English on every Windows language, so FMOS can read the result |
+| **Systems** | Windows only. macOS and Linux have no equivalent |
+| **Administrator** | Needed |
+| **Risks** | None. They only read and report, and can be stopped with Esc |
+| **Limits** | SFC answers in your Windows language. On Windows in another language, FMOS cannot explain SFC's result, so read the output instead |
+
 ### Network > Show network details
 
 Lists your network adapters with their IP addresses, gateway, and DNS servers.
@@ -333,8 +379,9 @@ fine: FMOS says it could not check, and carries on.
 - **FMOS does not change your system yet.** The only file it ever replaces is
   itself, and only when you choose to update. When repairs arrive, each one
   shows a review screen first and waits for you to press Y.
-- **No Administrator rights needed** for anything FMOS does so far. FMOS never
-  asks for them on its own. It only restarts as Administrator when you choose to.
+- **Administrator rights only when needed.** So far, only the Windows checks
+  (SFC and DISM) need them. FMOS never asks for them on its own. It only restarts as
+  Administrator when you choose to.
 - **Nothing runs behind your back.** FMOS runs fixed, built-in tools by their
   full path, never through a command shell, and shows each command before you run it.
 - **It only goes online to check for updates.** The check is a normal web

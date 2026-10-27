@@ -108,6 +108,9 @@ func (s *Session) LogAction(action actions.Action, result runner.Result) error {
 	if result.Err != nil {
 		fmt.Fprintf(&text, "  Error:     %v\n", result.Err)
 	}
+	if meaning := action.Meaning(result); meaning != "" {
+		fmt.Fprintf(&text, "  Result:    %s\n", meaning)
+	}
 	fmt.Fprintf(&text, "  Output (%d lines):\n", len(result.Output))
 	for _, line := range result.Output {
 		fmt.Fprintf(&text, "    | %s\n", line)

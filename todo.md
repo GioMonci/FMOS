@@ -291,13 +291,16 @@ v0.1.1 release works on macOS and Windows, including the swap and cleanup.
 - Publish v0.1.0 as a full release (not a pre-release), with the three programs
   and `SHA256SUMS.txt` (not `notes.md`).
 
-### 9. [ ] Write the install guide in the README
+### 9. [x] Write the install guide in the README
 
 **Written** in the README's Getting FMOS section. The three download links
 work (checked against the v0.1.1 release). Checked on Windows with a fresh
 download from the website: SmartScreen's warning appears and "Run anyway"
 works. A copy from a flash drive shows no warning, because only downloaded
-files carry the "from the internet" mark. **Left:** screenshots.
+files carry the "from the internet" mark. On a second Windows PC (2026-10-26),
+the downloaded file opened with no SmartScreen warning at all, so the guide
+says the warning "may" appear. Screenshots were skipped on purpose (see Later
+ideas): a friend got through from the written steps alone.
 
 - Write it for people who are not technical.
 - Cover these points:
@@ -314,7 +317,6 @@ files carry the "from the internet" mark. **Left:** screenshots.
   - How to remove FMOS (delete the folder).
   - For the Mac file: `chmod +x` and `xattr -c` before the first run (the
     README's Getting FMOS section already has these).
-- Add screenshots once the TUI exists.
 
 ### 10. [x] Build the GitHub Pages website
 
@@ -325,7 +327,8 @@ on a phone and on Windows, and FMOS downloaded with its button and ran.
 help page with questions and answers (`help.html`). A small script in
 `index.html` shows the Windows or Mac download, or a message on phones and
 other computers. Checked in Chrome with Windows, Mac, Linux, and iPhone
-browser descriptions. Not checked yet on the live site.
+browser descriptions. On the live site, a phone shows the "runs on
+computers" message, and both Windows PCs got the Windows download.
 
 - Plain `docs/index.html` and `docs/style.css`. No frameworks, no build step.
 - One page: what FMOS is, a download button, install steps, updating, what
@@ -345,13 +348,44 @@ Updating itself already works on Windows (tested with v0.1.1 in step 8), so
 this step is mostly about whether someone else can get FMOS running from the
 guide alone.
 
+**First friend test passed (2026-10-26):** a friend downloaded FMOS from the
+website on Windows, got the blue SmartScreen window, chose "Run anyway", and
+FMOS worked. **Left:** the update test below.
+
 - Have one or two people install FMOS from the website without help.
 - Publish a small new version and confirm that their copy updates itself.
 - Fix anything confusing in the guide before sharing FMOS more widely.
 
 ## Phase 3: Windows OS Repair
 
-### 12. [ ] DISM health checks (read-only)
+### 12. [ ] Read-only checks: SFC and DISM health
+
+**Built, not yet tested on Windows.** OS Repair lists, in this order: "Check
+system files (SFC)" (`sfc /verifyonly`, moved here from step 14), "Quick
+health check (DISM)" (`/CheckHealth`), and "Full health scan (DISM)"
+(`/ScanHealth`). All are read-only and need Administrator. SFC comes first
+because it checks the files Windows is running; the DISM checks then show
+whether Windows can repair them. FMOS adds `/English` to DISM, so its result
+sentences can be read on any Windows language, and explains results through
+each action's `Findings`. SFC has no English option, so on other languages
+FMOS says it could not tell what was found. Progress lines are redrawn in
+place on screen, and the log keeps only their final state. SFC writes UTF-16
+when its output goes to a program; the runner detects and decodes it. On
+macOS, fake DISM output and fake UTF-16 SFC output (with and without a byte
+order mark, and fed one byte at a time) gave the right lines and explanations.
+
+To test on Windows:
+
+- Not as Administrator: choosing a check shows the review screen. Press Y,
+  choose **No** on the Windows prompt, and FMOS should keep running and say
+  the check was not run. Press Y again and choose **Yes**: a new FMOS opens as
+  Administrator on the same review screen, and nothing runs until Y.
+- SFC's output is normal text (not spaced-out letters), its "Verification
+  N% complete" line updates in place, and it ends with a plain-English result.
+- The quick check finishes in seconds with a plain-English result.
+- The full scan shows one progress bar that updates in place, and Esc stops it.
+- The log has a "Result:" line and only one progress bar line.
+- If DISM rejects `/English` (an "unknown option" error), move it or remove it.
 
 - Offer `DISM /Online /Cleanup-Image /CheckHealth` and `/ScanHealth` as separate choices.
 - Explain the difference: CheckHealth reads already-recorded corruption, while
@@ -366,7 +400,8 @@ guide alone.
 
 ### 14. [ ] SFC check and repair
 
-- Offer `sfc /verifyonly` (check only) and `sfc /scannow` (repair).
+- `sfc /verifyonly` (check only) was added in step 12. Add `sfc /scannow`
+  (repair).
 - Explain that `/scannow` can replace damaged Windows system files.
 - When both are selected, run DISM RestoreHealth before SFC `/scannow`.
 - When the output supports it, distinguish three results: no integrity
@@ -523,6 +558,9 @@ The goal is to help answer "why am I lagging?"
 - View logs inside FMOS.
 - Clean up old logs automatically (for example, keep the newest 50). Only ever
   delete FMOS's own `fmos-*.txt` files, never anything else in the folder.
+- Screenshots in the install guide and on the website (the FMOS window and the
+  Windows warnings), only if people get stuck without them. Pictures of Windows
+  warnings go out of date when Microsoft changes their look.
 
 ## Scope boundaries
 

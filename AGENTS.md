@@ -32,11 +32,16 @@ The repository contains the Go foundation (`cmd/fmos/main.go`) and the TUI
 (`internal/sysinfo/`), a session log for every run (`internal/logging/`), a
 command runner (`internal/runner/`), and a list of actions per OS
 (`internal/actions/`), and an update checker (`internal/update/`, the Updates
-menu section). The only action so far is Network > Show network details, which
-is read-only. A review screen (`internal/tui/review.go`) guards system-changing
-and admin-only actions, and "Restart FMOS as Administrator" exists for Windows.
-OS Repair and Tools are still "Coming soon" placeholders. FMOS does not run
-repair commands or change the system yet. The first release, v0.1.1, is
+menu section). The actions so far are all read-only: Network > Show network
+details, and on Windows, OS Repair > "Check system files (SFC)"
+(`sfc /verifyonly`) and the DISM health checks (CheckHealth and ScanHealth),
+which need Administrator. The runner turns UTF-16 output (which SFC writes)
+into normal text, and redraws progress lines in place. An action can list
+`Findings`, the sentences its program prints and what they mean, so FMOS can
+explain the result in plain English. A review screen (`internal/tui/review.go`) guards
+system-changing and admin-only actions, and "Restart FMOS as Administrator"
+exists for Windows. Tools is still a "Coming soon" placeholder. FMOS does not
+run repairs or change the system yet. The first release, v0.1.1, is
 published on GitHub. The install guide is in the README, and the website is
 live from `docs/` (steps 9 and 10 in `todo.md`).
 

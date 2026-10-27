@@ -85,9 +85,12 @@ type Result struct {
 }
 
 // Run runs cmd and waits for it to finish. Each line the program prints is
-// passed to onLine as soon as it arrives. Cancelling ctx stops the program,
-// so only pass a cancellable ctx for actions that are safe to stop.
-func Run(ctx context.Context, cmd Command, onLine func(string)) Result {
+// passed to onLine as soon as it arrives. replacesLast is true when the
+// program redrew its previous line, such as DISM's progress bar, so the
+// screen should overwrite that line instead of adding one. Cancelling ctx
+// stops the program, so only pass a cancellable ctx for actions that are safe
+// to stop.
+func Run(ctx context.Context, cmd Command, onLine func(line string, replacesLast bool)) Result {
 	result := Result{Command: cmd, Started: time.Now(), ExitCode: -1}
 	name := filepath.Base(cmd.Program)
 	if !filepath.IsAbs(cmd.Program) {
@@ -124,13 +127,26 @@ func Run(ctx context.Context, cmd Command, onLine func(string)) Result {
 	readDone := make(chan struct{})
 	go func() {
 		defer close(readDone)
-		scanner := bufio.NewScanner(reader)
+		scanner := bufio.NewScanner(readableOutput(reader))
 		scanner.Buffer(make([]byte, 64*1024), 1024*1024)
 		scanner.Split(scanLines)
+		redrawNext := false // the last line ended with a lone "\r", so the next one redraws it
 		for scanner.Scan() {
-			line := strings.TrimRight(scanner.Text(), " \t")
-			result.Output = append(result.Output, line)
-			onLine(line)
+			text := scanner.Text()
+			line := strings.TrimRight(text, " \t\r")
+			replacesLast := redrawNext && len(result.Output) > 0
+			redrawNext = strings.HasSuffix(text, "\r")
+			switch {
+			case replacesLast && line == "":
+				// Only moved back to the start of the line. Like a terminal,
+				// keep showing what was there.
+			case replacesLast:
+				result.Output[len(result.Output)-1] = line
+				onLine(line, true)
+			default:
+				result.Output = append(result.Output, line)
+				onLine(line, false)
+			}
 		}
 	}()
 
@@ -161,7 +177,9 @@ func finish(result Result) Result {
 }
 
 // scanLines splits output into lines at "\n", "\r\n", or a lone "\r".
-// Windows tools such as SFC and DISM rewrite progress lines with a lone "\r".
+// Windows tools such as SFC and DISM redraw progress lines with a lone "\r".
+// A line ending in a lone "\r" keeps the "\r", so Run can tell that the next
+// line redraws it.
 func scanLines(data []byte, atEOF bool) (advance int, token []byte, err error) {
 	if atEOF && len(data) == 0 {
 		return 0, nil, nil
@@ -175,10 +193,10 @@ func scanLines(data []byte, atEOF bool) (advance int, token []byte, err error) {
 			if data[i+1] == '\n' {
 				return i + 2, data[:i], nil
 			}
-			return i + 1, data[:i], nil
+			return i + 1, data[:i+1], nil
 		}
 		if atEOF {
-			return i + 1, data[:i], nil
+			return i + 1, data[:i+1], nil
 		}
 		return 0, nil, nil // need more data
 	}

@@ -30,10 +30,17 @@ type task struct {
 
 // Messages from a running task.
 type (
-	outputLineMsg string
-	taskDoneMsg   runner.Result
-	tickMsg       time.Time
+	outputLineMsg struct {
+		text         string
+		replacesLast bool // the program redrew its last line, such as a progress bar
+	}
+	taskDoneMsg runner.Result
+	tickMsg     time.Time
 )
+
+// stillWorkingAfter is how long a read-only action runs before FMOS says that
+// some checks take several minutes, so a slow scan does not look stuck.
+const stillWorkingAfter = 10 * time.Second
 
 // startAction checks that an action may run, then runs it in the background
 // and switches to its screen.
@@ -62,8 +69,8 @@ func (m model) startAction(action actions.Action) (tea.Model, tea.Cmd) {
 	}
 	go func() {
 		defer stop()
-		result := runner.Run(runCtx, action.Command(), func(line string) {
-			t.events <- outputLineMsg(line)
+		result := runner.Run(runCtx, action.Command(), func(line string, replacesLast bool) {
+			t.events <- outputLineMsg{text: line, replacesLast: replacesLast}
 		})
 		t.events <- taskDoneMsg(result)
 	}()
@@ -92,7 +99,11 @@ func (m model) updateTask(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 	switch msg := msg.(type) {
 	case outputLineMsg:
-		t.lines = append(t.lines, string(msg))
+		if msg.replacesLast && len(t.lines) > 0 {
+			t.lines[len(t.lines)-1] = msg.text
+		} else {
+			t.lines = append(t.lines, msg.text)
+		}
 		return m, waitForTaskEvent(t.events)
 	case tickMsg:
 		if t.result == nil {
@@ -170,13 +181,20 @@ func (m model) taskStatus() string {
 	t := m.task
 	var status string
 	if t.result == nil {
+		elapsed := t.now.Sub(t.started)
 		status = fmt.Sprintf("Running %s (%s so far)...",
-			shortCommand(t.action.Command()), formatElapsed(t.now.Sub(t.started)))
-		if t.action.ChangesSystem {
+			shortCommand(t.action.Command()), formatElapsed(elapsed))
+		switch {
+		case t.action.ChangesSystem:
 			status += "\nThis may take a while. Do not close this window."
+		case elapsed >= stillWorkingAfter:
+			status += "\nStill working. Some checks take several minutes."
 		}
 	} else {
 		status = resultSummary(*t.result)
+		if meaning := t.action.Meaning(*t.result); meaning != "" {
+			status += "\n" + meaning
+		}
 		if t.result.Outcome == runner.Finished && t.action.MayNeedRestart {
 			status += "\nYour computer may need a restart to finish. Restart it when it " +
 				"suits you; FMOS never restarts it by itself."
