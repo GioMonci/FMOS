@@ -350,7 +350,12 @@ guide alone.
 
 **First friend test passed (2026-10-26):** a friend downloaded FMOS from the
 website on Windows, got the blue SmartScreen window, chose "Run anyway", and
-FMOS worked. **Left:** the update test below.
+FMOS worked.
+
+**v0.1.2 published (2026-11-27)** with the step 12 checks. The files on
+GitHub match the local build's fingerprints, and an installed v0.1.1 on the
+test mini PC updated itself to 0.1.2 (checksum verified). **Left:** a
+friend's copy updating itself.
 
 - Have one or two people install FMOS from the website without help.
 - Publish a small new version and confirm that their copy updates itself.
