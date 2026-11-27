@@ -130,11 +130,21 @@ func Run(ctx context.Context, cmd Command, onLine func(line string, replacesLast
 		scanner := bufio.NewScanner(readableOutput(reader))
 		scanner.Buffer(make([]byte, 64*1024), 1024*1024)
 		scanner.Split(scanLines)
-		redrawNext := false // the last line ended with a lone "\r", so the next one redraws it
+		redrawNext := false      // the last line ended with a lone "\r", so the next one redraws it
+		startedAtCR := false     // this line began with a lone "\r"
+		lastStartedAtCR := false // the last line kept in Output began with a lone "\r"
 		for scanner.Scan() {
 			text := scanner.Text()
+			if text == "\r" && !redrawNext {
+				// A lone "\r" at the start of a new line. When its output goes
+				// to a program, DISM writes each progress update as
+				// "\r[bar]\r\n", so a line that starts this way right after
+				// another one redraws it.
+				startedAtCR = true
+				continue
+			}
 			line := strings.TrimRight(text, " \t\r")
-			replacesLast := redrawNext && len(result.Output) > 0
+			replacesLast := (redrawNext || startedAtCR && lastStartedAtCR) && len(result.Output) > 0
 			redrawNext = strings.HasSuffix(text, "\r")
 			switch {
 			case replacesLast && line == "":
@@ -142,11 +152,14 @@ func Run(ctx context.Context, cmd Command, onLine func(line string, replacesLast
 				// keep showing what was there.
 			case replacesLast:
 				result.Output[len(result.Output)-1] = line
+				lastStartedAtCR = startedAtCR
 				onLine(line, true)
 			default:
 				result.Output = append(result.Output, line)
+				lastStartedAtCR = startedAtCR
 				onLine(line, false)
 			}
+			startedAtCR = false
 		}
 	}()
 

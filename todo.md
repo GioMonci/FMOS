@@ -165,9 +165,9 @@ closing FMOS's window or pressing Ctrl+C does not interrupt them.
 
 Verified on macOS with stand-in actions: the review screen, Y to confirm
 (Enter does nothing there), refusal without logs, the restart reminder, and
-`--open`. **Not tested yet:** the real Windows Administrator restart (the UAC
-prompt, choosing "No", and reopening on the same screen). No Windows action
-needs admin until step 12, so test it then.
+`--open`. The real Windows Administrator restart was verified on Windows 11
+in step 12 (2026-11-27): choosing "No" keeps FMOS running, and choosing
+"Yes" reopens FMOS as Administrator on the same review screen.
 
 - Code: the review screen is in `internal/tui/review.go`. Restarting as
   Administrator is in `internal/platform/elevate_windows.go`. Each action has a
@@ -358,9 +358,9 @@ FMOS worked. **Left:** the update test below.
 
 ## Phase 3: Windows OS Repair
 
-### 12. [ ] Read-only checks: SFC and DISM health
+### 12. [x] Read-only checks: SFC and DISM health
 
-**Built, not yet tested on Windows.** OS Repair lists, in this order: "Check
+Verified on Windows 11 (2026-11-27). OS Repair lists, in this order: "Check
 system files (SFC)" (`sfc /verifyonly`, moved here from step 14), "Quick
 health check (DISM)" (`/CheckHealth`), and "Full health scan (DISM)"
 (`/ScanHealth`). All are read-only and need Administrator. SFC comes first
@@ -374,18 +374,28 @@ when its output goes to a program; the runner detects and decodes it. On
 macOS, fake DISM output and fake UTF-16 SFC output (with and without a byte
 order mark, and fed one byte at a time) gave the right lines and explanations.
 
-To test on Windows:
+**Tested on Windows 11 Pro 25H2 (2026-11-27, test mini PC):**
 
-- Not as Administrator: choosing a check shows the review screen. Press Y,
-  choose **No** on the Windows prompt, and FMOS should keep running and say
-  the check was not run. Press Y again and choose **Yes**: a new FMOS opens as
-  Administrator on the same review screen, and nothing runs until Y.
-- SFC's output is normal text (not spaced-out letters), its "Verification
-  N% complete" line updates in place, and it ends with a plain-English result.
-- The quick check finishes in seconds with a plain-English result.
-- The full scan shows one progress bar that updates in place, and Esc stops it.
-- The log has a "Result:" line and only one progress bar line.
-- If DISM rejects `/English` (an "unknown option" error), move it or remove it.
+- [x] Not as Administrator: choosing a check shows the review screen. Y, then
+  **No** on the Windows prompt: FMOS keeps running. Y again, then **Yes**: a
+  new FMOS opens as Administrator on the same review screen, and nothing runs
+  until Y.
+- [x] SFC's output is normal text, its "Verification N% complete" line
+  updates in place, and it ends with a plain-English result.
+- [x] The quick check finishes in seconds with a plain-English result. DISM
+  accepts `/English`.
+- [x] The full scan shows one progress bar that updates in place. The first
+  test added a new line on every update. A captured
+  ScanHealth run showed why: when its output goes to a program, DISM writes
+  each update as `\r[bar]\r\n` (the lone `\r` comes first), not with a lone
+  `\r` at the end like SFC. The runner now treats a line that starts with a
+  lone `\r`, right after another such line, as a redraw. Replaying the
+  capture through the runner gave one final `100.0%` bar, and FMOS on
+  Windows then showed one bar updating in place.
+- [x] Esc stops the full scan, and the log says it was stopped.
+- [x] The log has a "Result:" line and only one progress bar line.
+- On this test PC, both DISM checks said "The component store is
+  repairable." SFC found no damage. Keep this for testing step 13.
 
 - Offer `DISM /Online /Cleanup-Image /CheckHealth` and `/ScanHealth` as separate choices.
 - Explain the difference: CheckHealth reads already-recorded corruption, while
